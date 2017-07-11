@@ -1,0 +1,33 @@
+{
+"table_filename" : "NLST_R0928_POS",
+"sino_filename" : "NLST_R0928_RAW",
+"image_filename" : "NLST_R0928_f_5mm",
+"edge_filename" : "NLST_R0928_v_5mm",
+"init_f_filename" : "NLST_R0928_init_f",
+"init_v_filename" : "NLST_R0928_init_v",
+
+"NX" : 512,
+"NY" : 512,
+
+"NDETECTOR" : 672,
+"NCHANNEL" : 16,
+"NPROJ" : 5800,
+"NPROJ_TURN" : 1160,
+
+"SOURCE_TO_ISO" : 570.0,
+"SOURCE_TO_DET" : 1040.0,
+
+"OFF_CENTER" : 0,
+
+"LENGTH_PER_DET" : 0.0775862,
+"LENGTH_PER_DET_Z" : 2.0,
+
+"PITCH_VALUE" : 18.0,
+
+"vz" : 5,
+"PROJ_OFFSET" : 3,
+"INIT_PROJ" : 12,
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 50
+}
