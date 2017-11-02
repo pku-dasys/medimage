@@ -3,8 +3,10 @@
 
 using ushort = unsigned short;
 
+double *f, *v, *g;
+
 void load_data(ushort* data, float* ed, int w, int h, int p,
-			   const char* data_name)
+	const char* data_name)
 {
 	FILE* input = fopen(data_name, "r");
 	if(!input)
@@ -31,4 +33,18 @@ void load_data(ushort* data, float* ed, int w, int h, int p,
 		}
 	}
 	fclose(input);
+}
+
+void ct3d(double *_image_data, double *_edge_data, double *_sino_data) {
+	f = _image_data;
+	v = _edge_data;
+	g = _sino_data;
+
+	hist_val = new double[GROUP];
+	new_hist_val = new double[GROUP];
+	group_index = new int[NZ*NX*NY];
+	sub_sum = new double[THREAD_NUMB];
+	sub_count = new int[THREAD_NUMB];
+
+	load_data
 }
