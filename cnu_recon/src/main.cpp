@@ -39,7 +39,7 @@ void parse_config(int argc, char** argv) {
 		config_filename = string(argv[1]);
 	}
 	else {
-		printf("Usage: ./ms3d CONFIG_FILE_NAME\n");
+		printf("Usage: ./ct3d CONFIG_FILE_NAME\n");
 		exit(1);
 	}
 
