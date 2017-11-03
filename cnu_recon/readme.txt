@@ -1,7 +1,10 @@
 单文件dr数据头1024字节，紧接着是2048*2048*1441个ushort数据，再接着是2048*2048个float的空扫的数据
+物体坐标范围(-1024,1024)，y正方向朝光源，原点在物体中心，z方向正上，也是旋转轴，右手系
 
 SOD=460.00000000*100/102
+#src to object distance
 SDD=836.70001221
+#src to board distance
 Width=2048
 Height=2048
 PixelDis=0.20000000

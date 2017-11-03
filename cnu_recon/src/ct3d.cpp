@@ -6,11 +6,12 @@ using ushort = unsigned short;
 
 double *f, *v, *g;
 
-void load_data(double* data, float* ed, int w, int h, int p,
+void load_data(double* data, double* ed, int w, int h, int p,
 	const char* data_name)
 {
-	FILE* input = fopen(data_name, "r");
-	ushort* tmp;
+	FILE* input = fopen(data_name, "rb");
+	ushort ustmp[1];
+	float ftmp[1];
 	if(!input)
 	{
 		fprintf(stderr, "cannot open data file\n");
@@ -25,8 +26,8 @@ void load_data(double* data, float* ed, int w, int h, int p,
 			fprintf(stderr, "unexpect ending\n");
 			break;
 		}
-		fscanf("%hu", &tmp);
-		*(data+i) = tmp;
+		fread(ustmp, sizeof(ushort), 1, input);
+		data[i] = ustmp[0];
 	}
 	if(ed)
 	{
@@ -37,7 +38,8 @@ void load_data(double* data, float* ed, int w, int h, int p,
 				fprintf(stderr, "unexpect ending\n");
 				break;
 			}
-			fscanf("%f", ed+i);
+			fread(ftmp, sizeof(float), 1, input);
+			ed[i] = ftmp[0];
 		}
 	}
 	fclose(input);
