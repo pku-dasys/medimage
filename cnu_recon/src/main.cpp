@@ -1,5 +1,6 @@
 #include "config.h"
 #include "ct3d.h"
+#include "utility.h"
 #include <cstdio>
 
 using namespace std;

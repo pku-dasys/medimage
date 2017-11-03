@@ -1,4 +1,5 @@
 #include "config.h"
+#include "utility.h"
 #include <stdio.h>
 
 using ushort = unsigned short;
@@ -31,6 +32,11 @@ void load_data(double* data, float* ed, int w, int h, int p,
 	{
 		for(int i=0; i<w*h; i++)
 		{
+			if(eof(input))
+			{
+				fprintf(stderr, "unexpect ending\n");
+				break;
+			}
 			fscanf("%f", ed+i);
 		}
 	}
