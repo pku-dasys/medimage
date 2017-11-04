@@ -1,17 +1,20 @@
 #include "config.h"
 #include "utility.h"
+#include "main.h"
+#include "ct3d.h"
+#include "tracing.h"
 #include <stdio.h>
+#include <boost/lexical_cast.hpp>
+using namespace std;
+using namespace boost;
 
 using ushort = unsigned short;
 
-double *f, *v, *g;
+double *f, *v, *g, *ed;
 double SOD, SDD;//src to obj, src to board
 double AT_sum;
 double lambda;
 int max_numb;
-#ifndef PI
-#define PI 3.1415926535897932385
-#endif
 
 void load_data(double* data, double* ed, int w, int h, int p,
 	const char* data_name)
@@ -118,9 +121,9 @@ void wrapper()
 	for(int k = 0; k < NANGLE; ++k)
 	{
 		double alpha = (double)k/NANGLE*2*PI;
-		for(int i = 0; i < detectorX; i++)
+		for(int i = 0; i < NDETECTORX; i++)
 		{
-			for(int j = 0; j < detectorZ; j++)
+			for(int j = 0; j < NDETECTORZ; j++)
 			{
 				compute(alpha, i, j);
 			}
@@ -140,7 +143,7 @@ void ct3d(double *_image_data, double *_edge_data, double *_sino_data) {
 	sub_sum = new double[THREAD_NUMB];
 	sub_count = new int[THREAD_NUMB];
 
-	load_data(g, ed, NX, NY, NZ, sino_filename);
+	load_data(g, ed, NX, NY, NZ, sino_filename.c_str());
 	memset(f, 0, NZ*NX*NY*sizeof(double));
 	memset(v, 0, NZ*NX*NY*sizeof(double));
 

@@ -1,9 +1,17 @@
 #include "config.h"
 #include "ct3d.h"
 #include "utility.h"
+#include "main.h"
 #include <cstdio>
 
+#include <boost/foreach.hpp>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
+
 using namespace std;
+using namespace boost::property_tree;
 
 string table_filename;
 string sino_filename;
@@ -12,13 +20,17 @@ string edge_filename;
 string init_f_filename;
 string init_v_filename;
 
+string OUTPUT_DIR;
+
 int PROJ_OFFSET;
 int INIT_PROJ;
 
 int NX, NY, NZ;
 int NPROJ, NDETECTOR, NCHANNEL;
 int NPROJ_TURN;
+int NANGLE, NDETECTORX, NDETECTORZ;
 int MS_ITERATIONS;
+
 
 double vz;
 

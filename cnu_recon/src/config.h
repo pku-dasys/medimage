@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+using std::string;
 
 extern string table_filename;
 extern string sino_filename;
