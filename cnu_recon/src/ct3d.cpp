@@ -71,11 +71,11 @@ void minIMAGE(double Af, int *line, double *weight, int numb)
 	}
 }
 
-void compute(int alpha, int detectorX, int detectorZ)
+void compute(double alpha, double detectorX, double detectorZ)
 /*alpha is the rotate angle of light source
 (or the object, then result will be a mirror image),
 from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
-is positive
+is positive. Initial angle is +Y
 */
 {
 	const double sina = sin(alpha), cosa = cos(alpha);

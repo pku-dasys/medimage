@@ -27,7 +27,7 @@ double array_3d_img(double *data,int z,int x,int y) {
 }
 
 double array_3d_sino(double *data,int z,int x,int y) {
-    return array_3d_raw(data,NPROJ,NDETECTOR,NCHANNEL,z,x,y);
+    return array_3d_raw(data,NANGLE,NDETECTORX,NDETECTORZ,z,x,y);
 }
 
 

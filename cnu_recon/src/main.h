@@ -13,41 +13,22 @@ extern string init_v_filename;
 
 extern string OUTPUT_DIR;
 
-extern int NX;
-extern int NY;
-extern int NZ;
-extern int NDETECTOR;
-extern int NCHANNEL;
-extern int NPROJ;
+extern int NX, NY, NZ;
 extern int NANGLE, NDETECTORX, NDETECTORZ;
 extern int NPROJ_TURN;
 
-extern int PROJ_OFFSET;
-extern int INIT_PROJ;
+extern int INIT_ANGLE;
 
-#define MAX_ELE_RAY 1280
-
-extern int MS_ITERATIONS;
+extern int CT_ITERATIONS;
 
 extern double SOURCE_TO_ISO;
 extern double SOURCE_TO_DET;
 
-extern double OFF_CENTER;
-
-extern double PITCH_VALUE;
-
-// [-25, 25] in 736 detectors
+// [-1024, 1024] detectors
 extern double LENGTH_PER_DET;
-extern double LENGTH_PER_DET_Z;
 
-#define vx 1.00
-#define vy 1.00
-// slice thickness
-extern double vz;
-
-#define HALFDET (NDETECTOR/2)
+#define HALFDET (NDETECTORX / 2)
 #define HALFSIZE (NX / 2.0)
-#define HALFDETZ (NCHANNEL/2)
 
 const float ALPHA = 0;
 const float BETA = 0;
