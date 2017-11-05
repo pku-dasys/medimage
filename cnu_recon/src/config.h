@@ -1,12 +1,5 @@
 #pragma once
 
-extern string table_filename;
-extern string sino_filename;
-extern string image_filename;
-extern string edge_filename;
-extern string init_f_filename;
-extern string init_v_filename;
-
 extern string OUTPUT_DIR;
 
 extern int NX;
