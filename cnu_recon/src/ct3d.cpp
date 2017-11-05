@@ -71,25 +71,28 @@ void minIMAGE(double Af, int *line, double *weight, int numb)
 	}
 }
 
-void compute(double alpha, double detectorX, double detectorZ)
+void compute(int k, int detectorX, int detectorZ)
 /*alpha is the rotate angle of light source
 (or the object, then result will be a mirror image),
 from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
 is positive. Initial angle is +Y
+the parameters should be int, as it represents the relative
+coordinate of grid in the detector
 */
 {
+	const double alpha = (double)k/NANGLE*2*PI;
 	const double sina = sin(alpha), cosa = cos(alpha);
 	double srcX = -SOD * sina,
 		   srcY =  SOD * cosa,
-		   oridstX = detectorX,
+		   oridstX = detectorX - NDETECTORX/2 + 0.5,
 		   oridstY = SOD - SDD,
 		   dstX = oridstX * cosa - oridstY * sina,
 		   dstY = oridstX * sina + oridstY * cosa,
-		   dstZ = detectorZ;
+		   dstZ = detectorZ - NDETECTORZ/2 + 0.5;
 	int *ind = new int[MAX_ELE_RAY];
 	double *wgt = new double[MAX_ELE_RAY];
 
-	double Af = -array_3d_sino(g, alpha, detectorX, detectorZ);
+	double Af = -array_3d_sino(g, k, detectorX, detectorZ);
 	//need to be modified to suit the actual layout
 	int numb;
 	{
@@ -120,20 +123,21 @@ void wrapper()
 {
 	for(int k = 0; k < NANGLE; ++k)
 	{
-		double alpha = (double)k/NANGLE*2*PI;
 		for(int i = 0; i < NDETECTORX; i++)
 		{
 			for(int j = 0; j < NDETECTORZ; j++)
 			{
-				compute(alpha, i, j);
+				compute(k, i, j);
 			}
 		}
 	}
 }
 
-void ct3d(double *_image_data, double *_edge_data, double *_sino_data) {
+void ct3d(double *_image_data,/* double *_edge_data,*/ double *_sino_data)
+{
+//deprecated: edge data
 	f = _image_data;
-	v = _edge_data;
+//	v = _edge_data;
 	g = _sino_data;
 
 	ed = new double[NX*NY];
@@ -145,7 +149,7 @@ void ct3d(double *_image_data, double *_edge_data, double *_sino_data) {
 
 	load_data(g, ed, NX, NY, NZ, sino_filename.c_str());
 	memset(f, 0, NZ*NX*NY*sizeof(double));
-	memset(v, 0, NZ*NX*NY*sizeof(double));
+//	memset(v, 0, NZ*NX*NY*sizeof(double));
 
 	for(int iters = 0; iters < MS_ITERATIONS; ++iters)
 	{
@@ -162,6 +166,8 @@ void ct3d(double *_image_data, double *_edge_data, double *_sino_data) {
 		write_data_3d(f, NZ, NX, NY, OUTPUT_DIR+"/"+image_filename+lexical_cast<string>(iters));
 	}
 	puts("iter end");
+
+	delete[] ed;
     delete [] hist_val;
     delete [] new_hist_val;
     delete [] group_index;
