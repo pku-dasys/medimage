@@ -19,6 +19,8 @@ extern int NPROJ_TURN;
 
 extern int INIT_ANGLE;
 
+#define MAX_ELE_RAY 1280
+
 extern int CT_ITERATIONS;
 
 extern double SOURCE_TO_ISO;
@@ -29,6 +31,11 @@ extern double LENGTH_PER_DET;
 
 #define HALFDET (NDETECTORX / 2)
 #define HALFSIZE (NX / 2.0)
+
+#define vx 1.00
+#define vy 1.00
+// slice thickness
+extern double vz;
 
 const float ALPHA = 0;
 const float BETA = 0;

@@ -28,6 +28,8 @@ int NX, NY, NZ;
 int NANGLE, NDETECTORX, NDETECTORZ;
 int CT_ITERATIONS;
 
+double vz;
+
 double SOURCE_TO_ISO;
 double SOURCE_TO_DET;
 
@@ -58,7 +60,7 @@ void parse_config(int argc, char** argv) {
 		table_filename = root.get<string>("table_filename");
 		sino_filename = root.get<string>("sino_filename");
 		image_filename = root.get<string>("image_filename");
-		edge_filename = root.get<string>("edge_filename");
+//		edge_filename = root.get<string>("edge_filename");
 		init_f_filename = root.get<string>("init_f_filename");
 		init_v_filename = root.get<string>("init_v_filename");
 
@@ -79,6 +81,8 @@ void parse_config(int argc, char** argv) {
 		SOURCE_TO_DET = root.get<double>("SOURCE_TO_DET");
 
 		LENGTH_PER_DET = root.get<double>("LENGTH_PER_DET");
+
+        vz = root.get<double>("vz");
 
 		THREAD_NUMB = root.get<int>("THREAD_NUMB");
 	}
@@ -119,10 +123,10 @@ int main(int argc, char** argv) {
 	double *sino_data = new double[NANGLE*NDETECTORX*NDETECTORZ];
 
 	memset(image_data, 0, sizeof(NZ*NX*NY)*sizeof(double));
-	memset(edge_data, 0, sizeof(NZ*NX*NY)*sizeof(double));
+//	memset(edge_data, 0, sizeof(NZ*NX*NY)*sizeof(double));
 	memset(sino_data, 0, sizeof(NANGLE*NDETECTORX*NDETECTORZ)*sizeof(double));
 
-	ct3d(image_data, edge_data, sino_data);
+	ct3d(image_data,/* edge_data,*/ sino_data);
 
 	write_data_3d(image_data, NZ, NX, NY, image_filename);
 	write_data_3d(edge_data, NZ, NX, NY, edge_filename);

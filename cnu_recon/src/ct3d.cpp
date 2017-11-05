@@ -57,7 +57,6 @@ void load_data(double* data, double* ed, int w, int h, int p,
 void minIMAGE(double Af, int *line, double *weight, int numb)
 {
 	int i;
-	double d[MAX_ELE_RAY];
 	for(i = 0; i<numb; i++)
 	{
 		Af += f[line[i]] * weight[i];
@@ -71,7 +70,10 @@ void minIMAGE(double Af, int *line, double *weight, int numb)
 	}
 }
 
-void compute(int k, int detectorX, int detectorZ)
+double *cos_table;
+double *sin_table;
+
+void compute(int alpha, int detectorX, int detectorZ)
 /*alpha is the rotate angle of light source
 (or the object, then result will be a mirror image),
 from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
@@ -80,20 +82,19 @@ the parameters should be int, as it represents the relative
 coordinate of grid in the detector
 */
 {
-	const double alpha = (double)k/NANGLE*2*PI;
-	const double sina = sin(alpha), cosa = cos(alpha);
+	const double sina = sin_table[alpha], cosa = cos_table[alpha];
 	double srcX = -SOD * sina,
 		   srcY =  SOD * cosa,
-		   oridstX = detectorX - NDETECTORX/2 + 0.5,
+		   oridstX = detectorX - NDETECTORX*0.5 + 0.5,
 		   oridstY = SOD - SDD,
 		   dstX = oridstX * cosa - oridstY * sina,
 		   dstY = oridstX * sina + oridstY * cosa,
-		   dstZ = detectorZ - NDETECTORZ/2 + 0.5;
+		   dstZ = detectorZ - NDETECTORZ*0.5 + 0.5;
 	int *ind = new int[MAX_ELE_RAY];
 	double *wgt = new double[MAX_ELE_RAY];
 
-	double Af = -array_3d_sino(g, k, detectorX, detectorZ);
-	//need to be modified to suit the actual layout
+	double Af = -array_3d_sino(g, detectorX, detectorZ, alpha);
+	//I don't know which is correct? X,Z,a? Z,X,a?
 	int numb;
 	{
 	forward_proj(srcX, srcY, 0.0,
@@ -151,7 +152,17 @@ void ct3d(double *_image_data,/* double *_edge_data,*/ double *_sino_data)
 	memset(f, 0, NZ*NX*NY*sizeof(double));
 //	memset(v, 0, NZ*NX*NY*sizeof(double));
 
-	for(int iters = 0; iters < MS_ITERATIONS; ++iters)
+	cos_table = new double[NANGLE];
+	sin_table = new double[NANGLE];
+
+	for(int i = 0; i < NANGLE; i++)
+	{
+		const double alpha = (double)i/NANGLE*2*PI;
+		sin_table[i] = sin(alpha);
+		cos_table[i] = cos(alpha);
+	}
+
+	for(int iters = 0; iters < CT_ITERATIONS; ++iters)
 	{
 		lambda = 1.0/(1000.0+iters*50.0);
 
@@ -167,6 +178,8 @@ void ct3d(double *_image_data,/* double *_edge_data,*/ double *_sino_data)
 	}
 	puts("iter end");
 
+	delete[] sin_table;
+	delete[] cos_table;
 	delete[] ed;
     delete [] hist_val;
     delete [] new_hist_val;
