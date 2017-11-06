@@ -1,3 +1,5 @@
 #pragma once
 
-void ct3d(double *_image_data,/* double *_edge_data,*/ double *_sino_data);
+#include "main.h"
+
+void ct3d(float *_image_data,/* double *_edge_data,*/ ushort *_sino_data);

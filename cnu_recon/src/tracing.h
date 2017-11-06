@@ -1,5 +1,5 @@
 #pragma once
 
-void forward_proj(double sx,double sy,double sz,
-                  double dx,double dy,double dz,
-                  int *ind,double *wgt,int &numb);
+void forward_proj(float sx,float sy,float sz,
+                  float dx,float dy,float dz,
+                  int64 *ind,float *wgt,int &numb);

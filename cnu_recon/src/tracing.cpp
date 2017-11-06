@@ -6,9 +6,9 @@
 
 using namespace std;
 
-#define LAMBDA_X(i, x_s, x_d, L) (L*((double)i-x_s)/(x_d-x_s))
-#define LAMBDA_Y(j, y_s, y_d, L) (L*((double)j-y_s)/(y_d-y_s))
-#define LAMBDA_Z(k, z_s, z_d, L) (L*((double)k-z_s)/(z_d-z_s))
+#define LAMBDA_X(i, x_s, x_d, L) (L*((float)i-x_s)/(x_d-x_s))
+#define LAMBDA_Y(j, y_s, y_d, L) (L*((float)j-y_s)/(y_d-y_s))
+#define LAMBDA_Z(k, z_s, z_d, L) (L*((float)k-z_s)/(z_d-z_s))
 
 #ifndef MAX
 #define MAX( x, y ) ( ((x) > (y)) ? (x) : (y) )
@@ -24,21 +24,21 @@ using namespace std;
 #endif
 #define ABS_VALUE(x) ( (x < 0) ? -(x) : (x) )
 
-void forward_proj(double sx,double sy,double sz,
-                  double dx,double dy,double dz,
-                  int *ind,double *wgt,int &numb) {
+void forward_proj(float sx,float sy,float sz,
+                  float dx,float dy,float dz,
+                  int64 *ind,float *wgt,int &numb) {
 
     int index = 0;
 
-    double ray_x, ray_y, ray_z;
-    double len_x, len_y, len_z;
-    double absvalue_x, absvalue_y, absvalue_z;
-    double lambda_x, lambda_y, lambda_z;
-    double L;
-    double lambda_min = 0.0;
-    double lambda_max;
-    double lambda0, lambdaN;
-    double temp;
+    float ray_x, ray_y, ray_z;
+    float len_x, len_y, len_z;
+    float absvalue_x, absvalue_y, absvalue_z;
+    float lambda_x, lambda_y, lambda_z;
+    float L;
+    float lambda_min = 0.0;
+    float lambda_max;
+    float lambda0, lambdaN;
+    float temp;
     int signx, signy, signz;
     int v_x, v_y, v_z;
     
@@ -62,21 +62,25 @@ void forward_proj(double sx,double sy,double sz,
     absvalue_z = fabs(ray_z);
     
     //get x=1 Lx Ly Lz
-    len_x = (absvalue_x > 1.e-4) ? (L / absvalue_x) * vx : 1.e6;
-    len_y = (absvalue_y > 1.e-4) ? (L / absvalue_y) * vy : 1.e6;
-    len_z = (absvalue_z > 1.e-4) ? (L / absvalue_z) * vz : 1.e6;
+    len_x = (absvalue_x > 1.e-4) ? (L / absvalue_x) : 1.e6;
+    len_y = (absvalue_y > 1.e-4) ? (L / absvalue_y) : 1.e6;
+    len_z = (absvalue_z > 1.e-4) ? (L / absvalue_z) : 1.e6;
 
     //initialize the values
     numb = 0;
 
     //get the entry and exit point between Ray & Image
     //distance between source and entry point
-    double tempx, tempy, tempz;
+    float tempx, tempy, tempz;
 
-    tempx = NX * vx;
-    tempy = NY * vy;
-    tempz = NZ * vz;
+    //tempx = NX * vx;
+    //tempy = NY * vy;
+    //tempz = NZ * vz;
 
+    tempx = NX;
+    tempy = NY;
+    tempz = NZ;
+    
     lambda0 = LAMBDA_X(0, sx, dx, L);
     lambdaN = LAMBDA_X(tempx, sx, dx, L);
     temp    = MIN(lambda0, lambdaN);
@@ -116,13 +120,13 @@ void forward_proj(double sx,double sy,double sz,
             v_x = NX - 1;
         lambda_x = lambda0 + len_x;
 
-        v_y = (sy + lambda0 * ray_y / L) / vy;
-        tempy = v_y * vy;
-        lambda_y = (absvalue_y < 1.e-4) ? 1.e6 : LAMBDA_Y(tempy + (signy > 0) * vy, sy, dy, L);
+        v_y = (sy + lambda0 * ray_y / L) ;
+        tempy = v_y ;
+        lambda_y = (absvalue_y < 1.e-4) ? 1.e6 : LAMBDA_Y(tempy + (signy > 0) , sy, dy, L);
 
-        v_z = (sz + lambda0 * ray_z / L) / vz;
-        tempz = v_z * vz;
-        lambda_z = (absvalue_z < 1.e-4) ? 1.e6 : LAMBDA_Z(tempz + (signz > 0) * vz, sz, dz, L);
+        v_z = (sz + lambda0 * ray_z / L) ;
+        tempz = v_z ;
+        lambda_z = (absvalue_z < 1.e-4) ? 1.e6 : LAMBDA_Z(tempz + (signz > 0) , sz, dz, L);
     }
     else if (index == 2)
     {
@@ -132,13 +136,13 @@ void forward_proj(double sx,double sy,double sz,
             v_y = NY - 1;
         lambda_y = lambda0 + len_y;
 
-        v_x = (sx + lambda0 * ray_x / L) / vx;
-        tempx = v_x * vx;
-        lambda_x = (absvalue_x < 1.e-4) ? 1.e6 : LAMBDA_X(tempx + (signx > 0) * vx, sx, dx, L);
+        v_x = (sx + lambda0 * ray_x / L) ;
+        tempx = v_x ;
+        lambda_x = (absvalue_x < 1.e-4) ? 1.e6 : LAMBDA_X(tempx + (signx > 0) , sx, dx, L);
 
-        v_z = (sz + lambda0 * ray_z / L) / vz;
-        tempz = v_z * vz;
-        lambda_z = (absvalue_z < 1.e-4) ? 1.e6 : LAMBDA_Z(tempz + (signz > 0) * vz, sz, dz, L);
+        v_z = (sz + lambda0 * ray_z / L) ;
+        tempz = v_z ;
+        lambda_z = (absvalue_z < 1.e-4) ? 1.e6 : LAMBDA_Z(tempz + (signz > 0) , sz, dz, L);
     }
     else  // if (index == 3)
     {
@@ -148,13 +152,13 @@ void forward_proj(double sx,double sy,double sz,
             v_z = NZ - 1;
         lambda_z = lambda0 + len_z;
 
-        v_x = (sx + lambda0 * ray_x / L) / vx;
-        tempx = v_x * vx;
-        lambda_x = (absvalue_x < 1.e-4) ? 1.e6 : LAMBDA_X(tempx + (signx > 0) * vx, sx, dx, L);
+        v_x = (sx + lambda0 * ray_x / L) ;
+        tempx = v_x ;
+        lambda_x = (absvalue_x < 1.e-4) ? 1.e6 : LAMBDA_X(tempx + (signx > 0) , sx, dx, L);
 
-        v_y = (sy + lambda0 * ray_y / L) / vy;
-        tempy = v_y * vy;
-        lambda_y = (absvalue_y < 1.e-4) ? 1.e6 : LAMBDA_Y(tempy + (signy > 0) * vy, sy, dy, L);
+        v_y = (sy + lambda0 * ray_y / L) ;
+        tempy = v_y ;
+        lambda_y = (absvalue_y < 1.e-4) ? 1.e6 : LAMBDA_Y(tempy + (signy > 0) , sy, dy, L);
     }
     //  printf("V %d %d %d \n",v_x,v_y,v_z);
 

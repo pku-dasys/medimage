@@ -10,7 +10,7 @@ ROOT_VPATH = $(foreach DIR, $(ROOT_DIR), $(ROOT_SRC)/$(DIR))
 ROOT_INCL = $(foreach DIR, $(ROOT_DIR), -I$(ROOT_SRC)/$(DIR))
 
 ROOT_CCFLAGS = $(ROOT_INCL) -I$(ROOT_LIB) \
-							 -std=c++1y -Wreorder -Wformat -Wunused \
+							 -Wreorder -Wformat -Wunused \
 							 -I./include -fopenmp
 
 ROOT_LDFLAGS = -L$(ROOT_LIB) -fopenmp

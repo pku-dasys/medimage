@@ -18,19 +18,23 @@
 using namespace boost;
 using namespace std;
 
-double array_3d_raw(double *data,int SIZE0,int SIZE1,int SIZE2,int x,int y,int z) {
+float array_3d_raw(float *data,int SIZE0,int SIZE1,int SIZE2,int x,int y,int z) {
     return *(data + z + SIZE2 * (y + x * SIZE1));
 }
 
-double array_3d_img(double *data,int z,int x,int y) {
+float array_3d_img(float *data,int z,int x,int y) {
     return array_3d_raw(data,NZ,NX,NY,z,x,y);
 }
 
-double array_3d_sino(double *data,int z,int x,int y) {
-    return array_3d_raw(data,NANGLE,NDETECTORX,NDETECTORZ,z,x,y);
+ushort array_3d_raw_sino(ushort *data,int SIZE0,int SIZE1,int SIZE2,int x,int y,int z) {
+    return *(data + z + SIZE2 * (y + x * SIZE1));
 }
 
+ushort array_3d_sino(ushort *data,int z,int x,int y) {
+    return array_3d_raw_sino(data,NPROJ,NDX,NDY,z,x,y);
+}
 
+/*
 int64_t timer_us( void )
 {
 #ifdef WIN32
@@ -56,11 +60,12 @@ int64_t timer_s( void )
     return ( (int64_t) tv_date.tv_sec);
 #endif
 }
+*/
 
-
-void write_data_3d(double *data,int Z,int X,int Y,string output_filename) {
-    FILE *output = fopen(output_filename.c_str(),"w");
+void write_data_3d(float *data,int Z,int X,int Y,string output_filename) {
     for (int z = 0; z<Z; ++z) {
+        string slice_name = OUTPUT_DIR+"/"+output_filename+lexical_cast<string>(z);
+        FILE *output = fopen(slice_name.c_str(),"w");
         for (int x = 0; x<X; ++x) {
             for (int y = 0; y<Y; ++y) {
                 //out<<array_3d_raw(data,Z,X,Y,z,x,y)<<' ';
@@ -70,13 +75,16 @@ void write_data_3d(double *data,int Z,int X,int Y,string output_filename) {
             //out_slice<<endl;
         }
         fprintf(output,"\n");
+        fclose(output);
         //out_slice.close();
     }
-    fclose(output);
 }
 
-double sqr(double x) { return x*x; }
+float sqr(float x) { return x*x; }
 
-double get_img_addr(double x,double y,double z) {
+//float get_img_addr(float x,float y,float z) {
+//    return z*NX*NY+x*NY+y;
+//}
+int64 get_img_addr(int64 x,int64 y,int64 z) {
     return z*NX*NY+x*NY+y;
 }
