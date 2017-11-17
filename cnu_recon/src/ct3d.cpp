@@ -28,7 +28,7 @@ void load_data(ushort* data, int w, int h, int p, const char* data_name) {
     fseek(input, 1024, SEEK_SET);//ignore header
     for (int i = 0; i<w*h*p; i += 2048) {
         if (!fread(data+i, sizeof(ushort), 2048, input)) {
-            fprintf(stderr, "unexpect ending\n");
+            fprintf(stderr, "unexpected ending\n");
             exit(1);
         }
     }
@@ -36,6 +36,33 @@ void load_data(ushort* data, int w, int h, int p, const char* data_name) {
     printf("done\n");
     fflush(stdout);
 }
+void load_part(ushort* data, int proj, int x, int y, int ys, int ye, const char* data_name){
+    //proj*x*[ys,ye), ye is not included
+    FILE* input = fopen(data_name, "rb");
+    if(!input){
+        fprintf(stderr, "cannot open data file\n");
+        exit(1);
+    }
+    printf("loading...");
+    fflush(stdout);
+    fseek(input, 1024, SEEK_SET);//ignore header
+    fseek(input, ys*sizeof(ushort), SEEK_CUR);
+    int i, s = proj*x;
+    for(i = 0; i < s; i++)
+    {
+        if(!fread(data, sizeof(ushort), ye-ys, input)) {
+            fprintf(stderr, "unexpected ending\n");
+            exit(1);
+        }
+        data += y;
+        fseek(input, (y-(ye-ys))*sizeof(ushort), SEEK_CUR);
+    }
+    fclose(input);
+    printf("done\n");
+    fflush(stdout);
+}
+
+
 
 void minIMAGE(float Af, int64 *line, float *weight, int numb)
 {
