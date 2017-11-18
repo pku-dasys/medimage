@@ -38,6 +38,7 @@ void load_data(ushort* data, int w, int h, int p, const char* data_name) {
 }
 void load_part(ushort* data, int proj, int x, int y, int ys, int ye, const char* data_name){
     //proj*x*[ys,ye), ye is not included
+    //data will be organized as a 3d array with size = (proj, x, ye-ys)
     FILE* input = fopen(data_name, "rb");
     if(!input){
         fprintf(stderr, "cannot open data file\n");
@@ -54,7 +55,7 @@ void load_part(ushort* data, int proj, int x, int y, int ys, int ye, const char*
             fprintf(stderr, "unexpected ending\n");
             exit(1);
         }
-        data += y;
+        data += ye-ys;
         fseek(input, (y-(ye-ys))*sizeof(ushort), SEEK_CUR);
     }
     fclose(input);
