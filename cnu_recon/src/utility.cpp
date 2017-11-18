@@ -31,7 +31,7 @@ ushort array_3d_raw_sino(ushort *data,int SIZE0,int SIZE1,int SIZE2,int x,int y,
 }
 
 ushort array_3d_sino(ushort *data,int z,int x,int y) {
-    return array_3d_raw_sino(data,NPROJ,NDX,NDY,z,x,y);
+    return array_3d_raw_sino(data,NPROJ,NDX,2*NDY_THICK,z,x,y-NDY_OFFSET+NDY_THICK);
 }
 
 /*

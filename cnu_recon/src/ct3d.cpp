@@ -55,7 +55,7 @@ void load_part(ushort* data, int proj, int x, int y, int ys, int ye, const char*
             fprintf(stderr, "unexpected ending\n");
             exit(1);
         }
-        data += ye-ys;
+        //data += ye-ys;
         fseek(input, (y-(ye-ys))*sizeof(ushort), SEEK_CUR);
     }
     fclose(input);
@@ -165,7 +165,11 @@ void wrapper() {
         }
     }
     */
-   compute(0,512,512);
+    //compute(0,512,512);
+	for (int k = 0; k < NPROJ; ++k)
+		for (int i = 0; i < NDX; ++i)
+			for (int j = NDY_OFFSET - NDY_THICK; j < NDY_OFFSET + NDY_THICK; ++j)
+				compute(k, i, j);
 }
 
 void ct3d(float *_image_data,/* float *_edge_data,*/ ushort *_sino_data) {
@@ -175,7 +179,7 @@ void ct3d(float *_image_data,/* float *_edge_data,*/ ushort *_sino_data) {
     g = _sino_data;
 
     //load_data(g, NPROJ, NDX, NDY, RAW_DATA_FILE.c_str());
-    
+    load_part(g, NPROJ, NDX, NDY, NDY_OFFSET - NDY_THICK, NDY_OFFSET + NDY_THICK, RAW_DATA_FILE.c_str());
     memset(f, 0, NZ*NX*NY*sizeof(float));
 //    memset(v, 0, NZ*NX*NY*sizeof(float));
 

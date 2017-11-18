@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
     float *image_data = new float[NZ*NX*NY];
     //float *edge_data = new float[NZ*NX*NY];
-    ushort *sino_data = new ushort[NPROJ*NDX*NDY];
+    ushort *sino_data = new ushort[NPROJ*NDX*NDY_THICK*2];
 
     memset(image_data, 0, sizeof(NZ*NX*NY)*sizeof(float));
     //memset(edge_data, 0, sizeof(NZ*NX*NY)*sizeof(float));

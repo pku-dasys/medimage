@@ -11,6 +11,7 @@ extern string OUTPUT_DIR;
 
 extern int NX, NY, NZ;
 extern int NPROJ, NDX, NDY;
+extern int NDY_THICK, NDY_OFFSET;
 
 #define MAX_RAYLEN 40960
 
