@@ -103,6 +103,12 @@ here, detectorY actually represent Z-axis
     dstX = oridstX * cosa - oridstY * sina;
     dstY = oridstX * sina + oridstY * cosa;
     dstZ = detectorY - NDY*0.5 + 0.5;
+
+    {//parallel
+        srcX = -dstX;
+        srcY = -dstY;
+        srcZ = dstZ;
+    }
     
     srcX += NX/2.0;
     srcY += NY/2.0;
@@ -178,8 +184,8 @@ void ct3d(float *_image_data,/* float *_edge_data,*/ ushort *_sino_data) {
 //    v = _edge_data;
     g = _sino_data;
 
-    //load_data(g, NPROJ, NDX, NDY, RAW_DATA_FILE.c_str());
-    load_part(g, NPROJ, NDX, NDY, NDY_OFFSET - NDY_THICK, NDY_OFFSET + NDY_THICK, RAW_DATA_FILE.c_str());
+    load_data(g, NPROJ, NDX, NDY, RAW_DATA_FILE.c_str());
+    //load_part(g, NPROJ, NDX, NDY, NDY_OFFSET - NDY_THICK, NDY_OFFSET + NDY_THICK, RAW_DATA_FILE.c_str());
     memset(f, 0, NZ*NX*NY*sizeof(float));
 //    memset(v, 0, NZ*NX*NY*sizeof(float));
 

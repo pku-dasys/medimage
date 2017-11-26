@@ -17,6 +17,7 @@ string OUTPUT_DIR;
 
 int NX, NY, NZ;
 int NPROJ, NDX, NDY;
+int NDY_THICK, NDY_OFFSET;
 int ITERATIONS;
 
 float SOD;
@@ -55,6 +56,8 @@ void parse_config(int argc, char** argv) {
         NDX = root.get<int>("NDX");
         NDY = root.get<int>("NDY");
         NPROJ = root.get<int>("NPROJ");
+        NDY_THICK = root.get<int>("NDY_THICK");
+        NDY_OFFSET = root.get<int>("NDY_OFFSET");
         
         ITERATIONS = root.get<int>("ITERATIONS");
 
