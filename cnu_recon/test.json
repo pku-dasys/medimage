@@ -1,0 +1,21 @@
+{
+"RAW_DATA_FILE" : "dr2048x2048x1441.dr",
+
+"NX" : 1024,
+"NY" : 1024,
+"NZ" : 1024,
+
+"NDX" : 2048,
+"NDY" : 2048,
+"NPROJ" : 1440,
+"NDY_THICK": 32,
+"NDY_OFFSET" : 1024,
+
+"SOD" : 450.0,
+"SDD" : 836.70001221,
+
+"THREAD_NUMB" : 16,
+"ITERATIONS" : 1,
+
+"OUTPUT_DIR" : "batch_1"
+}

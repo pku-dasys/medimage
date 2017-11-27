@@ -1,7 +1,8 @@
 #include "ct3d.h"
 #include "utility.h"
 #include "main.h"
-#include <cstdio>
+
+#include <iostream>
 
 #include <boost/foreach.hpp>
 
@@ -15,17 +16,7 @@ string RAW_DATA_FILE;
 
 string OUTPUT_DIR;
 
-int NX, NY, NZ;
-int NPROJ, NDX, NDY;
-int NDY_THICK, NDY_OFFSET;
-int ITERATIONS;
-
-float SOD;
-float SDD;
-
-int THREAD_NUMB;
-
-void parse_config(int argc, char** argv) {
+void parse_config(Parameter &args, int argc, char** argv) {
     string config_filename;
     if (argc==2) {
         config_filename = string(argv[1]);
@@ -49,71 +40,59 @@ void parse_config(int argc, char** argv) {
 
         OUTPUT_DIR = root.get<string>("OUTPUT_DIR");
 
-        NX = root.get<int>("NX");
-        NY = root.get<int>("NY");
-        NZ = root.get<int>("NZ");
+        args.NX = root.get<int>("NX");
+        args.NY = root.get<int>("NY");
+        args.NZ = root.get<int>("NZ");
         
-        NDX = root.get<int>("NDX");
-        NDY = root.get<int>("NDY");
-        NPROJ = root.get<int>("NPROJ");
-        NDY_THICK = root.get<int>("NDY_THICK");
-        NDY_OFFSET = root.get<int>("NDY_OFFSET");
+        args.NDX = root.get<int>("NDX");
+        args.NDY = root.get<int>("NDY");
+        args.NPROJ = root.get<int>("NPROJ");
+        args.NDY_THICK = root.get<int>("NDY_THICK");
+        args.NDY_OFFSET = root.get<int>("NDY_OFFSET");
         
-        ITERATIONS = root.get<int>("ITERATIONS");
+        args.ITERATIONS = root.get<int>("ITERATIONS");
 
-        SOD = root.get<float>("SOD");
-        SDD = root.get<float>("SDD");
+        args.SOD = root.get<float>("SOD");
+        args.SDD = root.get<float>("SDD");
 
-        THREAD_NUMB = root.get<int>("THREAD_NUMB");
+        args.THREAD_NUMB = root.get<int>("THREAD_NUMB");
     }
     catch (ptree_error &e) {
         printf("JSON file corrupted.\n");
         exit(1);
     }
+
+    // derive other parameters
+    args.derive();
 }
-/*
-void print_options() {
-    printf("CT3D reconstruction flow begins!\n");
-    printf("================================\n");
-    printf("Here are the options:\n");
 
-    printf("Image size   NZ=%d   NX=%d   NY=%d\n",NZ,NX,NY);
-    printf("Number of angles: %d\n",NPROJ);
-    printf("Number of detector row and channel: %d, %d\n",NDX,NDY);
-
-    printf("%d iterations with %d threads.\n",CT_ITERATIONS, THREAD_NUMB);
-
-    printf("Source to ISO and detectors: %.1lf, %.1lf\n",SOD,SDD);
-
-    printf("Length per detector length: %lf\n",LENGTH_PER_DET);
-
-    printf("Results in the directory %s\n",OUTPUT_DIR.c_str());
-
-    fflush(stdout);
+void print_options(const Parameter &args) {
+    cout << "CT3D reconstruction flow begins!" << endl;
+    cout << "================================" << endl;
+    cout << "Here are the options:" << endl;
+    cout << "Image size: NZ=" << args.NZ << " NX=" << args.NX <<" NY="<<args.NY<< endl;
+    cout << "Number of angles: "<< args.NPROJ <<endl;
+    cout << "Number of detector row and channel: " << args.NDX << ", " << args.NDY << endl;
+    cout << args.CT_ITERATIONS << " iterations with " << args.THREAD_NUMB << " threads." << endl;
+    cout << "Source to ISO and detectors: " << args.SOD << ", " << args.SDD << "%.1lf" << endl;
+    cout << "Length per detector: " << args.LENGTH_PER_DET << endl;
+    cout<<endl;
 }
-*/
+
 int main(int argc, char** argv) {
+    CTInput *in = new CTInput();
+    CTOutput *out = new CTOutput();
+    Parameter *args = new args();
 
-    parse_config(argc, argv);
+    parse_config(*args, argc, argv);
+    print_options(*args);
+    in.read_sino(*args, RAW_DATA_FILE);
+    ct3d(args,in,out);
+    out.write_img(*args, OUTPUT_DIR);
 
-    //print_options();
-
-    float *image_data = new float[NZ*NX*NY];
-    //float *edge_data = new float[NZ*NX*NY];
-    ushort *sino_data = new ushort[NPROJ*NDX*NDY_THICK*2];
-
-    memset(image_data, 0, sizeof(NZ*NX*NY)*sizeof(float));
-    //memset(edge_data, 0, sizeof(NZ*NX*NY)*sizeof(float));
-    memset(sino_data, 0, sizeof(NPROJ*NDX*NDY)*sizeof(ushort));
-
-    ct3d(image_data,/* edge_data,*/ sino_data);
-
-    write_data_3d(image_data, NZ, NX, NY, "CNU");
-    //write_data_3d(edge_data, NZ, NX, NY, edge_filename);
-
-    delete [] image_data;
-    //delete [] edge_data;
-    delete [] sino_data;
+    delete in;
+    delete out;
+    delete args;
 
     return 0;
 }
