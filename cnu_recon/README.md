@@ -1,11 +1,9 @@
 # 3D Industrial CT Reconstruction
 
-# ./bin/generate
+# test datasets
 
-Step 1: Run it to generate `test.dr'.
+We now only support test datasets using parallel beam.
 
-Step 2: `./bin/ct3d test.json' to produce test results
-
-# ./bin/ct3d 
-
-Main program.
+1. Run `./bin/generate` to generate `test.dr`.
+2. Run `./bin/ct3d test.json` to write image results in `test` folder.
+3. You can use Octave or Matlab to show the images.
