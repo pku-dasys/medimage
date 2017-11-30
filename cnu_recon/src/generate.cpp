@@ -61,7 +61,7 @@ int main(int argc, char** argv) {
         for (int i = 0; i<128; ++i)
             for (int j = 0; j<128; ++j) {
                 float dst = sqrt(sqr(i-64.0)+sqr(j-64.0));
-                if (equals(dst,24) || equals(dst,48)) {
+                if (equals(dst,24) || equals(dst,48) || equals(dst,36) || equals(dst,12) || equals(dst,60)) {
                     img[k*128*128+i*128+j] = 0.2;
                 }
                 else img[k*128*128+i*128+j] = 0.0;
