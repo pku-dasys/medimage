@@ -2,24 +2,87 @@
 #include "main.h"
 #include "ct3d.h"
 #include "tracing.h"
+
 #include <cstdio>
-#include <boost/lexical_cast.hpp>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
+
 using namespace std;
 using namespace boost;
 
 int max_numb;
 
+// u is the axis of the rotation
+// R is the rotating matrix
+// theta
+void rotate_axis_3d(float &x,float &y,float &z,float ux,float uy,float uz,float theta) {
+    float c = 1/sqrt(sqr(ux)+sqr(uy)+sqr(uz));
+    ux *= c;
+    uy *= c;
+    uz *= c;
 
-// alpha is the rotate angle of light source
-// (or the object, then result will be a mirror image),
-// from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
-// is positive. Initial angle is +Y
-// the parameters should be int, as it represents the relative
-// coordinate of grid in the detector
-// here, detectorY actually represent Z-axis
+    float X[3][1] = {{x},{y},{z}};
+    float costheta = cos(theta), sintheta = sin(theta);
+    float R[3][3] = {
+        {costheta+sqr(ux)*(1-costheta), ux*uy*(1-costheta)-uz*sintheta, ux*uz*(1-costheta)+uy*sintheta},
+        {uy*ux*(1-costheta)+uz*sintheta, costheta+sqr(uy)*(1-costheta), uy*uz*(1-costheta)-ux*sintheta},
+        {uz*ux*(1-costheta)-uy*sintheta, uz*uy*(1-costheta)+ux*sintheta, costheta+sqr(uz)*(1-costheta)}
+    };
+
+    float d[3][1] = {};
+    for (int k = 0; k<3; ++k)
+        for (int i = 0; i<3; ++i)
+            for (int j = 0; j<1; ++j)
+                d[i][j] += R[i][k]*X[k][j];
+    
+    x = d[0][0];
+    y = d[1][0];
+    z = d[2][0];
+}
+
+void rotate_2d(float &x,float &y,float theta) {
+    float X[2][1] = {{x},{y}};
+    float costheta = cos(theta), sintheta = sin(theta);
+    float R[2][2] = {
+        {costheta, -sintheta},
+        {sintheta, costheta}
+    };
+
+    float d[2][1] = {};
+    for (int k = 0; k<2; ++k)
+        for (int i = 0; i<2; ++i)
+            for (int j = 0; j<1; ++j)
+                d[i][j] += R[i][k]*X[k][j];
+    
+    x = d[0][0];
+    y = d[1][0];
+}
+
+/*
+ Z-axis         
+ |   /    
+ |  / |   
+ | /  |  detector  board
+ | |  |   
+ | |  /      <--   object   <--  source
+ | | /   /
+ | |/   /  x-axis
+ |     /
+ |    /
+ |   /
+ |  /
+ | /
+ |/               y-axis (negative direction)
+ ----------------------->
+
+step 1: the center of the object is at the origin (0,0)
+        then we calculate src and dst using rotate
+step 2: shift src and dst to right place
+*/
 void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
              const Parameter &args, const CTInput &in, CTOutput &out) {
     const float sina = sin_table[alpha], cosa = cos_table[alpha];
@@ -27,16 +90,41 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
     float dstX,dstY,dstZ;
 
     if (args.BEAM=="Parallel") {
-        srcX = detectorX;
-        srcY = detectorY;
-        srcZ = 0.0;
+        srcX = detectorY+0.5 - args.HALFSIZE;
+        srcY = -args.SOD;
+
+        srcZ = args.NX - detectorX - 1;
 
         
-        dstX = detectorX;
-        dstY = detectorY;
-        dstZ = args.SDD;
+        dstX = detectorY+0.5 - args.HALFSIZE;
+        dstY = args.SDD-args.SOD;
 
-        //printf("%f %f %f     %f %f %f\n",srcX, srcY, srcZ, dstX, dstY, dstZ);
+        dstZ = args.NX-detectorX-1;
+
+        float theta = (float)alpha/args.NPROJ*2*PI;
+
+        // static int last_alpha = -1;
+
+        // if (alpha!=last_alpha) {
+        //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+        // }
+
+        // rotation
+        //rotate_axis_3d(srcX, srcY, srcZ, 0, 1, 0, theta);
+        //rotate_axis_3d(dstX, dstY, dstZ, 0, 1, 0, theta);
+        
+        rotate_2d(srcX, srcY, theta);
+        rotate_2d(dstX, dstY, theta);
+
+        srcX += args.HALFSIZE;
+        srcY += args.HALFSIZE;
+        dstX += args.HALFSIZE;
+        dstY += args.HALFSIZE;
+
+        // if (alpha!=last_alpha) {
+        //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+        //     last_alpha = alpha;
+        // }
     }
     else if (args.BEAM=="Cone") {
         float oridstX,oridstY;
@@ -58,6 +146,8 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
         //dstZ += NZ/2.0;
     }
 
+    //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+
     int64 *ind = new int64[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
     int numb;
@@ -69,16 +159,17 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
                  dstX, dstY, dstZ,
                  ind, wgt, numb);
 
-    // if (numb>0) {
+    // if (alpha==270 && detectorX==0 && detectorY==0) {
     //     printf("%d %d %d\n",alpha,detectorX, detectorY);
+    //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
     //     printf("%d\n",numb);
     //     for (int i = 0; i<numb; ++i) {
     //         int z,x,y;
     //         int64 tmp = ind[i];
-    //         z = tmp/(NX*NY);
-    //         tmp %= NX*NY;
-    //         x = tmp/NY;
-    //         y = tmp%NY;
+    //         z = tmp/(args.NX*args.NY);
+    //         tmp %= args.NX*args.NY;
+    //         x = tmp/args.NY;
+    //         y = tmp%args.NY;
     //         cout<<ind[i]<<endl;
     //         printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
     //     }
@@ -87,7 +178,7 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
     //     exit(0);
     // }
     
-    if (max_numb<numb) max_numb = max_numb;
+    if (max_numb<numb) max_numb = numb;
     
     out.minIMAGE(Af, ind, wgt, numb, lambda);
 
@@ -97,10 +188,13 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
 
 void wrapper(float lambda,float *sin_table,float *cos_table,
              const Parameter &args,const CTInput &in,CTOutput &out) {
-	for (int k = 0; k < args.NPROJ; ++k)
+    for (int k = 0; k < args.NPROJ; ++k)
+    //for (int k = 270; k < 271; ++k)
 		for (int i = 0; i < args.NDX; ++i)
-			for (int j = 0; j < args.NDY; ++j)
+			for (int j = 0; j < args.NDY; ++j) {
 				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
+                //cout << format("%1% %2% %3%") %k%i%j <<endl;
+            }
 }
 
 void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
@@ -115,17 +209,18 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
 
     max_numb = 0;
 
-    float lambda = 0.001;
-    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(1000.0+iters*50.0);
+    out.allocate_img(args.NX*args.NY*args.NZ);
 
-        printf("iter = %d, lambda = %lf\n", iters, lambda);
-        fflush(stdout);
+    float lambda = 0.005;
+    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
+        lambda = 1.0/(200.0+iters*20.0);
+
+        cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
         wrapper(lambda,sin_table,cos_table, args,in,out);
     }
-    
-    printf("max_numb = %d\n",max_numb);
+
+    cout<< max_numb << endl;
 
     delete [] sin_table;
     delete [] cos_table;

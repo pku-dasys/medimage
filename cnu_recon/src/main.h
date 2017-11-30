@@ -2,9 +2,11 @@
 
 #include <string>
 #include <cmath>
+#include <iostream>
 #include <fstream>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace boost;
@@ -70,13 +72,14 @@ public:
     }
 
     void write_img(const string &output_dir) {
+        cout<< "Start writing images ..." <<endl;
         for (int z = 0; z<args.NZ; ++z) {
             string slice_output = output_dir+"/"+lexical_cast<string>(z);
             ofstream fou(slice_output);
             fou.precision(6);
             for (int x = 0; x<args.NX; ++x) {
                 for (int y = 0; y<args.NY; ++y) {
-                    fou<< img_data(z, x, y);
+                    fou<< img_data(z, x, y) << ' ';
                 }
                 fou<<endl;
             }

@@ -11,7 +11,7 @@ ROOT_INCL = $(foreach DIR, $(ROOT_DIR), -I$(ROOT_SRC)/$(DIR))
 
 ROOT_CCFLAGS = $(ROOT_INCL) -I$(ROOT_LIB) \
 							 -Wreorder -Wformat -Wunused \
-							 -I./include -fopenmp
+							 -I./include -fopenmp -std=c++11
 
 ROOT_LDFLAGS = -L$(ROOT_LIB) -fopenmp
 

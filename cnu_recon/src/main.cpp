@@ -47,8 +47,8 @@ void parse_config(Parameter &args, int argc, char** argv) {
         args.NDX = root.get<int>("NDX");
         args.NDY = root.get<int>("NDY");
         args.NPROJ = root.get<int>("NPROJ");
-        args.NDY_THICK = root.get<int>("NDY_THICK");
-        args.NDY_OFFSET = root.get<int>("NDY_OFFSET");
+        //args.NDY_THICK = root.get<int>("NDY_THICK");
+        //args.NDY_OFFSET = root.get<int>("NDY_OFFSET");
         
         args.ITERATIONS = root.get<int>("ITERATIONS");
 
@@ -76,7 +76,7 @@ void print_options(const Parameter &args) {
     cout << "Number of angles: "<< args.NPROJ <<endl;
     cout << "Number of detector row and channel: " << args.NDX << ", " << args.NDY << endl;
     cout << args.ITERATIONS << " iterations with " << args.THREAD_NUMB << " threads." << endl;
-    cout << "Source to ISO and detectors: " << args.SOD << ", " << args.SDD << "%.1lf" << endl;
+    cout << "Source to ISO and detectors: " << args.SOD << ", " << args.SDD << endl;
     cout << "Length per detector: " << args.LENGTH_PER_DET << endl;
     cout<<endl;
 }
