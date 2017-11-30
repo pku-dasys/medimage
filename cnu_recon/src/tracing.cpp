@@ -1,6 +1,6 @@
 #include "main.h"
-#include "utility.h"
 #include "tracing.h"
+#include "utility.h"
 
 #include <cmath>
 
@@ -24,7 +24,12 @@ using namespace std;
 #endif
 #define ABS_VALUE(x) ( (x < 0) ? -(x) : (x) )
 
-void forward_proj(float sx,float sy,float sz,
+int64 get_img_addr(const Parameter &args,int x,int y,int z) {
+    return (int64)z*args.NX*args.NY+x*args.NY+y;
+}
+
+void forward_proj(const Parameter &args,
+                  float sx,float sy,float sz,
                   float dx,float dy,float dz,
                   int64 *ind,float *wgt,int &numb) {
 
@@ -77,9 +82,9 @@ void forward_proj(float sx,float sy,float sz,
     //tempy = NY * vy;
     //tempz = NZ * vz;
 
-    tempx = NX;
-    tempy = NY;
-    tempz = NZ;
+    tempx = args.NX;
+    tempy = args.NY;
+    tempz = args.NZ;
     
     lambda0 = LAMBDA_X(0, sx, dx, L);
     lambdaN = LAMBDA_X(tempx, sx, dx, L);
@@ -117,7 +122,7 @@ void forward_proj(float sx,float sy,float sz,
         if (signx == 1)
             v_x = 0;
         else
-            v_x = NX - 1;
+            v_x = args.NX - 1;
         lambda_x = lambda0 + len_x;
 
         v_y = (sy + lambda0 * ray_y / L) ;
@@ -133,7 +138,7 @@ void forward_proj(float sx,float sy,float sz,
         if (signy == 1)
             v_y = 0;
         else
-            v_y = NY - 1;
+            v_y = args.NY - 1;
         lambda_y = lambda0 + len_y;
 
         v_x = (sx + lambda0 * ray_x / L) ;
@@ -149,7 +154,7 @@ void forward_proj(float sx,float sy,float sz,
         if (signz == 1)
             v_z = 0;
         else
-            v_z = NZ - 1;
+            v_z = args.NZ - 1;
         lambda_z = lambda0 + len_z;
 
         v_x = (sx + lambda0 * ray_x / L) ;
@@ -169,7 +174,7 @@ void forward_proj(float sx,float sy,float sz,
         {
             //(*sino)  += (lambda_x - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-            ind[numb] = get_img_addr(v_x, v_y, v_z);
+            ind[numb] = get_img_addr(args, v_x, v_y, v_z);
             wgt[numb] = lambda_x - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;
@@ -182,7 +187,7 @@ void forward_proj(float sx,float sy,float sz,
         {
             //(*sino)  += (lambda_y - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-            ind[numb] = get_img_addr(v_x, v_y, v_z);
+            ind[numb] = get_img_addr(args, v_x, v_y, v_z);
             wgt[numb] = lambda_y - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;
@@ -195,7 +200,7 @@ void forward_proj(float sx,float sy,float sz,
         {
             //(*sino)  += (lambda_z - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-            ind[numb] = get_img_addr(v_x, v_y, v_z);
+            ind[numb] = get_img_addr(args, v_x, v_y, v_z);
             wgt[numb] = lambda_z - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;

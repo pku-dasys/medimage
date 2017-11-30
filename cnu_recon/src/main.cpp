@@ -56,6 +56,8 @@ void parse_config(Parameter &args, int argc, char** argv) {
         args.SDD = root.get<float>("SDD");
 
         args.THREAD_NUMB = root.get<int>("THREAD_NUMB");
+
+        args.BEAM = root.get<string>("BEAM");
     }
     catch (ptree_error &e) {
         printf("JSON file corrupted.\n");
@@ -73,26 +75,24 @@ void print_options(const Parameter &args) {
     cout << "Image size: NZ=" << args.NZ << " NX=" << args.NX <<" NY="<<args.NY<< endl;
     cout << "Number of angles: "<< args.NPROJ <<endl;
     cout << "Number of detector row and channel: " << args.NDX << ", " << args.NDY << endl;
-    cout << args.CT_ITERATIONS << " iterations with " << args.THREAD_NUMB << " threads." << endl;
+    cout << args.ITERATIONS << " iterations with " << args.THREAD_NUMB << " threads." << endl;
     cout << "Source to ISO and detectors: " << args.SOD << ", " << args.SDD << "%.1lf" << endl;
     cout << "Length per detector: " << args.LENGTH_PER_DET << endl;
     cout<<endl;
 }
 
 int main(int argc, char** argv) {
-    CTInput *in = new CTInput();
-    CTOutput *out = new CTOutput();
-    Parameter *args = new args();
+    Parameter args;
 
-    parse_config(*args, argc, argv);
-    print_options(*args);
-    in.read_sino(*args, RAW_DATA_FILE);
+    parse_config(args, argc, argv);
+    print_options(args);
+
+    CTInput in = CTInput(args);
+    CTOutput out = CTOutput(args);
+
+    in.read_sino(RAW_DATA_FILE);
     ct3d(args,in,out);
-    out.write_img(*args, OUTPUT_DIR);
-
-    delete in;
-    delete out;
-    delete args;
+    out.write_img(OUTPUT_DIR);
 
     return 0;
 }

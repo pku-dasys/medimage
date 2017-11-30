@@ -1,21 +1,21 @@
 {
-"RAW_DATA_FILE" : "dr2048x2048x1441.dr",
+"RAW_DATA_FILE" : "test.dr",
 
-"NX" : 1024,
-"NY" : 1024,
-"NZ" : 1024,
+"NX" : 128,
+"NY" : 128,
+"NZ" : 128,
 
-"NDX" : 2048,
-"NDY" : 2048,
-"NPROJ" : 1440,
-"NDY_THICK": 32,
-"NDY_OFFSET" : 1024,
+"NDX" : 128,
+"NDY" : 128,
+"NPROJ" : 360,
 
 "SOD" : 450.0,
 "SDD" : 836.70001221,
 
+"BEAM" : "Parallel",
+
 "THREAD_NUMB" : 16,
 "ITERATIONS" : 1,
 
-"OUTPUT_DIR" : "batch_1"
+"OUTPUT_DIR" : "test"
 }

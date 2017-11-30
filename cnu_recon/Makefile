@@ -28,7 +28,7 @@ ROOT_OPT = -O3
 endif
 endif
 
-ROOT_NAME = ct3d
+ROOT_NAME = ct3d generate
 ROOT_BUILD = ./build$(ROOT_POSTFIX)
 
 all ::

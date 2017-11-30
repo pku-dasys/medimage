@@ -10,128 +10,102 @@
 using namespace std;
 using namespace boost;
 
-float *f;
-ushort *g;
-float lambda;
-
 int max_numb;
 
-void minIMAGE(float Af, int64 *line, float *weight, int numb)
-{
-    for (int i = 0; i<numb; i++) {
-        Af += f[line[i]] * weight[i];
-    }
-    for (int i = 0; i<numb; i++) {
-        int64 ind = line[i];
-        f[ind] += lambda * (-Af * weight[i]);
-        if(f[ind]<0) f[ind] = 0;
-    }
-}
 
-float *cos_table;
-float *sin_table;
-
-void compute(int alpha, int detectorX, int detectorY)
-/*alpha is the rotate angle of light source
-(or the object, then result will be a mirror image),
-from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
-is positive. Initial angle is +Y
-the parameters should be int, as it represents the relative
-coordinate of grid in the detector
-
-here, detectorY actually represent Z-axis
-*/
-{
+// alpha is the rotate angle of light source
+// (or the object, then result will be a mirror image),
+// from the view of +Z to -Z, counterclockwise(+X->+Y->-X->-Y)
+// is positive. Initial angle is +Y
+// the parameters should be int, as it represents the relative
+// coordinate of grid in the detector
+// here, detectorY actually represent Z-axis
+void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
+             const Parameter &args, const CTInput &in, CTOutput &out) {
     const float sina = sin_table[alpha], cosa = cos_table[alpha];
-    float srcX,srcY,srcZ = 0.0;
+    float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
-    float oridstX,oridstY;
 
-    srcX = (-SOD * sina) / vx;
-    srcY = ( SOD * cosa) / vy;
-    oridstX = detectorX - NDX*0.5 + 0.5;
-    oridstY = (SOD - SDD) / vy;
-    dstX = oridstX * cosa - oridstY * sina;
-    dstY = oridstX * sina + oridstY * cosa;
-    dstZ = detectorY - NDY*0.5 + 0.5;
+    if (args.BEAM=="Parallel") {
+        srcX = detectorX;
+        srcY = detectorY;
+        srcZ = 0.0;
 
-    {//parallel
-        srcX = -dstX;
-        srcY = -dstY;
-        srcZ = dstZ;
+        
+        dstX = detectorX;
+        dstY = detectorY;
+        dstZ = args.SDD;
+
+        //printf("%f %f %f     %f %f %f\n",srcX, srcY, srcZ, dstX, dstY, dstZ);
     }
-    
-    srcX += NX/2.0;
-    srcY += NY/2.0;
-    srcZ += NZ/2.0;
-    dstX += NX/2.0;
-    dstY += NY/2.0;
-    dstZ += NZ/2.0;
+    else if (args.BEAM=="Cone") {
+        float oridstX,oridstY;
+        srcZ = 0.0;
 
-    printf("%f %f %f     %f %f %f\n",srcX, srcY, srcZ, dstX, dstY, dstZ);
+        srcX = (-args.SOD * sina);
+        srcY = ( args.SOD * cosa);
+        oridstX = detectorX - args.NDX*0.5 + 0.5;
+        oridstY = (args.SOD - args.SDD);
+        dstX = oridstX * cosa - oridstY * sina;
+        dstY = oridstX * sina + oridstY * cosa;
+        dstZ = detectorY - args.NDY*0.5 + 0.5;
 
-    int64 *ind = new int64[MAX_RAYLEN];
-    float *wgt = new float[MAX_RAYLEN];
+        srcX += args.NX/2.0;
+        srcY += args.NY/2.0;
+        //srcZ += NZ/2.0;
+        dstX += args.NX/2.0;
+        dstY += args.NY/2.0;
+        //dstZ += NZ/2.0;
+    }
+
+    int64 *ind = new int64[args.MAX_RAYLEN];
+    float *wgt = new float[args.MAX_RAYLEN];
     int numb;
 
-    float Af = -array_3d_sino(g, alpha, detectorX, detectorY);
+    float Af = -in.sino_data(alpha, detectorX, detectorY);
 
-    
-    {
-    forward_proj(srcX, srcY, srcZ,
+    forward_proj(args,
+                 srcX, srcY, srcZ,
                  dstX, dstY, dstZ,
                  ind, wgt, numb);
-    }
-    
-    
-    if (numb>0) {
-        printf("%d %d %d\n",alpha,detectorX, detectorY);
-        printf("%d\n",numb);
-        for (int i = 0; i<numb; ++i) {
-            int z,x,y;
-            int64 tmp = ind[i];
-            z = tmp/(NX*NY);
-            tmp %= NX*NY;
-            x = tmp/NY;
-            y = tmp%NY;
-            cout<<ind[i]<<endl;
-            printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
-        }
-        printf("\n");
-        fflush(stdout);
-        exit(0);
-    }
+
+    // if (numb>0) {
+    //     printf("%d %d %d\n",alpha,detectorX, detectorY);
+    //     printf("%d\n",numb);
+    //     for (int i = 0; i<numb; ++i) {
+    //         int z,x,y;
+    //         int64 tmp = ind[i];
+    //         z = tmp/(NX*NY);
+    //         tmp %= NX*NY;
+    //         x = tmp/NY;
+    //         y = tmp%NY;
+    //         cout<<ind[i]<<endl;
+    //         printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
+    //     }
+    //     printf("\n");
+    //     fflush(stdout);
+    //     exit(0);
+    // }
     
     if (max_numb<numb) max_numb = max_numb;
     
-    {
-    minIMAGE(Af, ind, wgt, numb);
-    }
-    
+    out.minIMAGE(Af, ind, wgt, numb, lambda);
+
     delete[] ind;
     delete[] wgt;
 }
 
-void wrapper() {
-/*
-    for(int k = 0; k < NPROJ; ++k) {
-        for(int i = 0; i < NDX; i++) {
-            for(int j = 0; j < NDY; j++) {
-                compute(k, i, j);
-            }
-        }
-    }
-    */
-    //compute(0,512,512);
-	for (int k = 0; k < NPROJ; ++k)
-		for (int i = 0; i < NDX; ++i)
-			for (int j = NDY_OFFSET - NDY_THICK; j < NDY_OFFSET + NDY_THICK; ++j)
-				compute(k, i, j);
+void wrapper(float lambda,float *sin_table,float *cos_table,
+             const Parameter &args,const CTInput &in,CTOutput &out) {
+	for (int k = 0; k < args.NPROJ; ++k)
+		for (int i = 0; i < args.NDX; ++i)
+			for (int j = 0; j < args.NDY; ++j)
+				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
 }
 
 void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
-    float cos_table = new float[NPROJ];
-    float sin_table = new float[NPROJ];
+    float *cos_table = new float[args.NPROJ];
+    float *sin_table = new float[args.NPROJ];
 
     for(int i = 0; i < args.NPROJ; i++) {
         const float alpha = (float)i/args.NPROJ*2*PI;
@@ -142,15 +116,14 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
     max_numb = 0;
 
     float lambda = 0.001;
-    for (int iters = 0; iters < ITERATIONS; ++iters) {
+    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
         lambda = 1.0/(1000.0+iters*50.0);
 
         printf("iter = %d, lambda = %lf\n", iters, lambda);
         fflush(stdout);
 
-        wrapper();
+        wrapper(lambda,sin_table,cos_table, args,in,out);
     }
-    puts("iter end");
     
     printf("max_numb = %d\n",max_numb);
 
