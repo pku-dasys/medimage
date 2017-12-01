@@ -1,5 +1,5 @@
 {
-"RAW_DATA_FILE" : "test.dr",
+"RAW_DATA_FILE" : "test_360x128x128_128_parallel.dr",
 
 "NX" : 128,
 "NY" : 128,
