@@ -1,4 +1,3 @@
-#include "main.h"
 #include "tracing.h"
 #include "utility.h"
 
@@ -24,14 +23,14 @@ using namespace std;
 #endif
 #define ABS_VALUE(x) ( (x < 0) ? -(x) : (x) )
 
-int64 get_img_addr(const Parameter &args,int x,int y,int z) {
-    return (int64)z*args.NX*args.NY+x*args.NY+y;
+int64_t get_img_addr(const Parameter &args,int x,int y,int z) {
+    return (int64_t)z*args.NX*args.NY+x*args.NY+y;
 }
 
 void forward_proj(const Parameter &args,
                   float sx,float sy,float sz,
                   float dx,float dy,float dz,
-                  int64 *ind,float *wgt,int &numb) {
+                  int64_t *ind,float *wgt,int &numb) {
 
     int index = 0;
 

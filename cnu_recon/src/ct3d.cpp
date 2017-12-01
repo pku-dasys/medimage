@@ -1,7 +1,4 @@
-#include "utility.h"
-#include "main.h"
 #include "ct3d.h"
-#include "tracing.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -11,217 +8,146 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+
 using namespace std;
 using namespace boost;
+using namespace boost::property_tree;
 
-int max_numb;
+/////////// Class  Parameter
 
-// u is the axis of the rotation
-// R is the rotating matrix
-// theta
-void rotate_axis_3d(float &x,float &y,float &z,float ux,float uy,float uz,float theta) {
-    float c = 1/sqrt(sqr(ux)+sqr(uy)+sqr(uz));
-    ux *= c;
-    uy *= c;
-    uz *= c;
-
-    float X[3][1] = {{x},{y},{z}};
-    float costheta = cos(theta), sintheta = sin(theta);
-    float R[3][3] = {
-        {costheta+sqr(ux)*(1-costheta), ux*uy*(1-costheta)-uz*sintheta, ux*uz*(1-costheta)+uy*sintheta},
-        {uy*ux*(1-costheta)+uz*sintheta, costheta+sqr(uy)*(1-costheta), uy*uz*(1-costheta)-ux*sintheta},
-        {uz*ux*(1-costheta)-uy*sintheta, uz*uy*(1-costheta)+ux*sintheta, costheta+sqr(uz)*(1-costheta)}
-    };
-
-    float d[3][1] = {};
-    for (int k = 0; k<3; ++k)
-        for (int i = 0; i<3; ++i)
-            for (int j = 0; j<1; ++j)
-                d[i][j] += R[i][k]*X[k][j];
-    
-    x = d[0][0];
-    y = d[1][0];
-    z = d[2][0];
-}
-
-void rotate_2d(float &x,float &y,float theta) {
-    float X[2][1] = {{x},{y}};
-    float costheta = cos(theta), sintheta = sin(theta);
-    float R[2][2] = {
-        {costheta, -sintheta},
-        {sintheta, costheta}
-    };
-
-    float d[2][1] = {};
-    for (int k = 0; k<2; ++k)
-        for (int i = 0; i<2; ++i)
-            for (int j = 0; j<1; ++j)
-                d[i][j] += R[i][k]*X[k][j];
-    
-    x = d[0][0];
-    y = d[1][0];
-}
-
-/*
- Z-axis         
- |   /    
- |  / |   
- | /  |  detector  board
- | |  |   
- | |  /      <--   object   <--  source
- | | /   /
- | |/   /  x-axis
- |     /
- |    /
- |   /
- |  /
- | /
- |/               y-axis (negative direction)
- ----------------------->
-
-step 1: the center of the object is at the origin (0,0)
-        then we calculate src and dst using rotate
-step 2: shift src and dst to right place
-*/
-void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
-             const Parameter &args, const CTInput &in, CTOutput &out) {
-    const float sina = sin_table[alpha], cosa = cos_table[alpha];
-    float srcX,srcY,srcZ;
-    float dstX,dstY,dstZ;
-
-    if (args.BEAM=="Parallel") {
-        srcX = detectorY+0.5 - args.HALFSIZE;
-        srcY = -args.SOD;
-
-        srcZ = args.NX - detectorX - 1;
-
-        
-        dstX = detectorY+0.5 - args.HALFSIZE;
-        dstY = args.SDD-args.SOD;
-
-        dstZ = args.NX-detectorX-1;
-
-        float theta = (float)alpha/args.NPROJ*2*PI;
-
-        // static int last_alpha = -1;
-
-        // if (alpha!=last_alpha) {
-        //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-        // }
-
-        // rotation
-        //rotate_axis_3d(srcX, srcY, srcZ, 0, 1, 0, theta);
-        //rotate_axis_3d(dstX, dstY, dstZ, 0, 1, 0, theta);
-        
-        rotate_2d(srcX, srcY, theta);
-        rotate_2d(dstX, dstY, theta);
-
-        srcX += args.HALFSIZE;
-        srcY += args.HALFSIZE;
-        dstX += args.HALFSIZE;
-        dstY += args.HALFSIZE;
-
-        // if (alpha!=last_alpha) {
-        //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-        //     last_alpha = alpha;
-        // }
+void Parameter::parse_config(int argc, char** argv) {
+    string config_filename;
+    if (argc==2) {
+        config_filename = string(argv[1]);
     }
-    else if (args.BEAM=="Cone") {
-        float oridstX,oridstY;
-        srcZ = 0.0;
-
-        srcX = (-args.SOD * sina);
-        srcY = ( args.SOD * cosa);
-        oridstX = detectorX - args.NDX*0.5 + 0.5;
-        oridstY = (args.SOD - args.SDD);
-        dstX = oridstX * cosa - oridstY * sina;
-        dstY = oridstX * sina + oridstY * cosa;
-        dstZ = detectorY - args.NDY*0.5 + 0.5;
-
-        srcX += args.NX/2.0;
-        srcY += args.NY/2.0;
-        //srcZ += NZ/2.0;
-        dstX += args.NX/2.0;
-        dstY += args.NY/2.0;
-        //dstZ += NZ/2.0;
+    else {
+        printf("Usage: ./ct3d CONFIG_FILE_NAME\n");
+        exit(1);
     }
 
-    //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+    ptree root;
+    try {
+        read_json(config_filename, root);
+    }
+    catch (ptree_error &e) {
+        printf("Could not read from the JSON file.\n");
+        exit(1);
+    }
 
-    int64 *ind = new int64[args.MAX_RAYLEN];
-    float *wgt = new float[args.MAX_RAYLEN];
-    int numb;
+    try {
+        RAW_DATA_FILE = root.get<string>("RAW_DATA_FILE");
 
-    float Af = -in.sino_data(alpha, detectorX, detectorY);
+        OUTPUT_DIR = root.get<string>("OUTPUT_DIR");
 
-    forward_proj(args,
-                 srcX, srcY, srcZ,
-                 dstX, dstY, dstZ,
-                 ind, wgt, numb);
+        NX = root.get<int>("NX");
+        NY = root.get<int>("NY");
+        NZ = root.get<int>("NZ");
+        
+        NDX = root.get<int>("NDX");
+        NDY = root.get<int>("NDY");
+        NPROJ = root.get<int>("NPROJ");
+        
+        ITERATIONS = root.get<int>("ITERATIONS");
 
-    // if (alpha==270 && detectorX==0 && detectorY==0) {
-    //     printf("%d %d %d\n",alpha,detectorX, detectorY);
-    //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-    //     printf("%d\n",numb);
-    //     for (int i = 0; i<numb; ++i) {
-    //         int z,x,y;
-    //         int64 tmp = ind[i];
-    //         z = tmp/(args.NX*args.NY);
-    //         tmp %= args.NX*args.NY;
-    //         x = tmp/args.NY;
-    //         y = tmp%args.NY;
-    //         cout<<ind[i]<<endl;
-    //         printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
-    //     }
-    //     printf("\n");
-    //     fflush(stdout);
-    //     exit(0);
-    // }
-    
-    if (max_numb<numb) max_numb = numb;
-    
-    out.minIMAGE(Af, ind, wgt, numb, lambda);
+        SOD = root.get<float>("SOD");
+        SDD = root.get<float>("SDD");
 
-    delete[] ind;
-    delete[] wgt;
+        THREAD_NUMB = root.get<int>("THREAD_NUMB");
+
+        BEAM = root.get<string>("BEAM");
+    }
+    catch (ptree_error &e) {
+        printf("JSON file corrupted.\n");
+        exit(1);
+    }
+
+    // derive other parameters
+    HALFDET = NDX/2;
+    HALFSIZE = NX/2.0;
 }
 
-void wrapper(float lambda,float *sin_table,float *cos_table,
-             const Parameter &args,const CTInput &in,CTOutput &out) {
-    for (int k = 0; k < args.NPROJ; ++k)
-    //for (int k = 270; k < 271; ++k)
-		for (int i = 0; i < args.NDX; ++i)
-			for (int j = 0; j < args.NDY; ++j) {
-				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
-                //cout << format("%1% %2% %3%") %k%i%j <<endl;
+void Parameter::print_options() {
+    cout << "CT3D reconstruction flow begins!" << endl;
+    cout << "================================" << endl;
+    cout << "Here are the options:" << endl;
+    cout << "Image size: NZ=" << NZ << " NX=" << NX <<" NY="<< NY<< endl;
+    cout << "Number of angles: "<< NPROJ <<endl;
+    cout << "Number of detector row and channel: " << NDX << ", " << NDY << endl;
+    cout << ITERATIONS << " iterations with " << THREAD_NUMB << " threads." << endl;
+    cout << "Source to ISO and detectors: " << SOD << ", " << SDD << endl;
+    cout << "Length per detector: " << LENGTH_PER_DET << endl;
+    cout<<endl;
+}
+
+/////////// Class  CTOutput
+
+void CTOutput::allocate_img(int size) {
+    img = new img_type[size]{};
+}
+
+img_type& CTOutput::img_data(int z,int x,int y) {
+    return img[z*args.NX*args.NY+x*args.NY+y];
+}
+
+void CTOutput::write_img(const string &output_dir) {
+    cout<< "Start writing images ..." <<endl;
+    for (int z = 0; z<args.NZ; ++z) {
+        string slice_output = output_dir+"/"+lexical_cast<string>(z);
+        ofstream fou(slice_output);
+        fou.precision(6);
+        for (int x = 0; x<args.NX; ++x) {
+            for (int y = 0; y<args.NY; ++y) {
+                fou<< img_data(z, x, y) << ' ';
             }
+            fou<<endl;
+        }
+        fou.close();
+    }
 }
 
-void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
-    float *cos_table = new float[args.NPROJ];
-    float *sin_table = new float[args.NPROJ];
-
-    for(int i = 0; i < args.NPROJ; i++) {
-        const float alpha = (float)i/args.NPROJ*2*PI;
-        sin_table[i] = sin(alpha);
-        cos_table[i] = cos(alpha);
+void CTOutput::minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda) {
+    for (int i = 0; i<numb; i++) {
+        Af += img[line[i]] * weight[i];
     }
-
-    max_numb = 0;
-
-    out.allocate_img(args.NX*args.NY*args.NZ);
-
-    float lambda = 0.005;
-    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(200.0+iters*20.0);
-
-        cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
-
-        wrapper(lambda,sin_table,cos_table, args,in,out);
+    for (int i = 0; i<numb; i++) {
+        int64_t ind = line[i];
+        img_type tmp = img[ind] + lambda * (-Af * weight[i]);
+        if (tmp<0) tmp = 0;
+        img[ind] = tmp;
     }
+}
 
-    cout<< max_numb << endl;
+CTOutput::CTOutput(const Parameter &_args) : args(_args) {
+}
+CTOutput::~CTOutput() {
+    if (img) delete [] img;
+}
 
-    delete [] sin_table;
-    delete [] cos_table;
+/////////// Class  CTInput
+
+void CTInput::allocate_sino(int64_t size) {
+    sino = new sino_type[size]{};
+}
+
+sino_type CTInput::sino_data(int p,int x,int y) const {
+    return sino[p*args.NDX*args.NDY+x*args.NDY+y];
+}
+
+void CTInput::read_sino(const string &raw_data_file) {
+    ifstream fin(raw_data_file, ios::in | ios::binary);
+    fin.seekg(1024);
+    int64_t size = (int64_t)args.NPROJ * args.NDX * args.NDY;
+    allocate_sino(size);
+    //cout << "read sinogram from binary file ..." << endl;
+    fin.read((char*)sino, sizeof(sino_type) * size);
+    //cout << "reading finished." << endl;
+    fin.close();
+}
+
+CTInput::CTInput(const Parameter &_args) : args(_args) {
+}
+CTInput::~CTInput() {
+    if (sino) delete [] sino;
 }

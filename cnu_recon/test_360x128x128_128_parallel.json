@@ -12,10 +12,13 @@
 "SOD" : 450.0,
 "SDD" : 836.70001221,
 
+"SAMPLESIZE" : 1.0,
+"PIXELSIZE" : 1.0,
+
 "BEAM" : "Parallel",
 
 "THREAD_NUMB" : 16,
 "ITERATIONS" : 1,
 
-"OUTPUT_DIR" : "test"
+"OUTPUT_DIR" : "test_360x128x128_128_parallel"
 }

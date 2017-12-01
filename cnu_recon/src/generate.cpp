@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "tracing.h"
-#include "main.h"
+#include "ct3d.h"
 
 using namespace std;
 
@@ -30,7 +30,7 @@ void wrapper1(float *img, ushort *prj, int a,int x,int y) {
     dstZ = 128-x-1;
     dstY = -450;
 
-    int64 *ind = new int64[512];
+    int64_t *ind = new int64_t[512];
     float *wgt = new float[512];
     int numb;
 
@@ -81,7 +81,7 @@ void test1() {
     ofstream fou("test_360x128x128_128_parallel.dr", ios::out | ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
-    int64 size = (int64)128 * 128;
+    int64_t size = (int64)128 * 128;
     for (int k = 0; k<360; ++k)
         fou.write((char*)prj, sizeof(ushort) * size);
     fou.close();

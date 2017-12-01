@@ -1,98 +1,186 @@
 #include "ct3d.h"
 #include "utility.h"
-#include "main.h"
+#include "tracing.h"
 
 #include <iostream>
 
 #include <boost/foreach.hpp>
+#include <boost/format.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 using namespace std;
+using namespace boost;
 using namespace boost::property_tree;
 
-string RAW_DATA_FILE;
+int max_numb;
 
-string OUTPUT_DIR;
+/*
+ Z-axis         
+ |   /    
+ |  / |   
+ | /  |  detector  board
+ | |  |   
+ | |  /      <--   object   <--  source
+ | | /   /
+ | |/   /  x-axis
+ |     /
+ |    /
+ |   /
+ |  /
+ | /
+ |/               y-axis (negative direction)
+ ----------------------->
 
-void parse_config(Parameter &args, int argc, char** argv) {
-    string config_filename;
-    if (argc==2) {
-        config_filename = string(argv[1]);
-    }
-    else {
-        printf("Usage: ./ct3d CONFIG_FILE_NAME\n");
-        exit(1);
-    }
+step 1: the center of the object is at the origin (0,0)
+        then we calculate src and dst using rotate
+step 2: shift src and dst to right place
+*/
+void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
+             const Parameter &args, const CTInput &in, CTOutput &out) {
+    const float sina = sin_table[alpha], cosa = cos_table[alpha];
+    float srcX,srcY,srcZ;
+    float dstX,dstY,dstZ;
 
-    ptree root;
-    try {
-        read_json(config_filename, root);
-    }
-    catch (ptree_error &e) {
-        printf("Could not read from the JSON file.\n");
-        exit(1);
-    }
+    if (args.BEAM=="Parallel") {
+        srcX = detectorY+0.5 - args.HALFSIZE;
+        srcY = -args.SOD;
 
-    try {
-        RAW_DATA_FILE = root.get<string>("RAW_DATA_FILE");
+        srcZ = args.NX - detectorX - 1;
 
-        OUTPUT_DIR = root.get<string>("OUTPUT_DIR");
-
-        args.NX = root.get<int>("NX");
-        args.NY = root.get<int>("NY");
-        args.NZ = root.get<int>("NZ");
         
-        args.NDX = root.get<int>("NDX");
-        args.NDY = root.get<int>("NDY");
-        args.NPROJ = root.get<int>("NPROJ");
-        //args.NDY_THICK = root.get<int>("NDY_THICK");
-        //args.NDY_OFFSET = root.get<int>("NDY_OFFSET");
+        dstX = detectorY+0.5 - args.HALFSIZE;
+        dstY = args.SDD-args.SOD;
+
+        dstZ = args.NX-detectorX-1;
+
+        float theta = (float)alpha/args.NPROJ*2*PI;
+
+        // rotation
+        //rotate_axis_3d(srcX, srcY, srcZ, 0, 1, 0, theta);
+        //rotate_axis_3d(dstX, dstY, dstZ, 0, 1, 0, theta);
         
-        args.ITERATIONS = root.get<int>("ITERATIONS");
+        rotate_2d(srcX, srcY, theta);
+        rotate_2d(dstX, dstY, theta);
 
-        args.SOD = root.get<float>("SOD");
-        args.SDD = root.get<float>("SDD");
-
-        args.THREAD_NUMB = root.get<int>("THREAD_NUMB");
-
-        args.BEAM = root.get<string>("BEAM");
+        srcX += args.HALFSIZE;
+        srcY += args.HALFSIZE;
+        dstX += args.HALFSIZE;
+        dstY += args.HALFSIZE;
     }
-    catch (ptree_error &e) {
-        printf("JSON file corrupted.\n");
-        exit(1);
+    else if (args.BEAM=="Cone") {
+        float oridstX,oridstY;
+        srcZ = 0.0;
+
+        srcX = (-args.SOD * sina);
+        srcY = ( args.SOD * cosa);
+        oridstX = detectorX - args.NDX*0.5 + 0.5;
+        oridstY = (args.SOD - args.SDD);
+        dstX = oridstX * cosa - oridstY * sina;
+        dstY = oridstX * sina + oridstY * cosa;
+        dstZ = detectorY - args.NDY*0.5 + 0.5;
+
+        srcX += args.NX/2.0;
+        srcY += args.NY/2.0;
+        //srcZ += NZ/2.0;
+        dstX += args.NX/2.0;
+        dstY += args.NY/2.0;
+        //dstZ += NZ/2.0;
     }
 
-    // derive other parameters
-    args.derive();
+    //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+
+    int64_t *ind = new int64_t[args.MAX_RAYLEN];
+    float *wgt = new float[args.MAX_RAYLEN];
+    int numb;
+
+    float Af = -in.sino_data(alpha, detectorX, detectorY);
+
+    forward_proj(args,
+                 srcX, srcY, srcZ,
+                 dstX, dstY, dstZ,
+                 ind, wgt, numb);
+
+    // if (alpha==270 && detectorX==0 && detectorY==0) {
+    //     printf("%d %d %d\n",alpha,detectorX, detectorY);
+    //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+    //     printf("%d\n",numb);
+    //     for (int i = 0; i<numb; ++i) {
+    //         int z,x,y;
+    //         int64_t tmp = ind[i];
+    //         z = tmp/(args.NX*args.NY);
+    //         tmp %= args.NX*args.NY;
+    //         x = tmp/args.NY;
+    //         y = tmp%args.NY;
+    //         cout<<ind[i]<<endl;
+    //         printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
+    //     }
+    //     printf("\n");
+    //     fflush(stdout);
+    //     exit(0);
+    // }
+    
+    if (max_numb<numb) max_numb = numb;
+    
+    out.minIMAGE(Af, ind, wgt, numb, lambda);
+
+    delete[] ind;
+    delete[] wgt;
 }
 
-void print_options(const Parameter &args) {
-    cout << "CT3D reconstruction flow begins!" << endl;
-    cout << "================================" << endl;
-    cout << "Here are the options:" << endl;
-    cout << "Image size: NZ=" << args.NZ << " NX=" << args.NX <<" NY="<<args.NY<< endl;
-    cout << "Number of angles: "<< args.NPROJ <<endl;
-    cout << "Number of detector row and channel: " << args.NDX << ", " << args.NDY << endl;
-    cout << args.ITERATIONS << " iterations with " << args.THREAD_NUMB << " threads." << endl;
-    cout << "Source to ISO and detectors: " << args.SOD << ", " << args.SDD << endl;
-    cout << "Length per detector: " << args.LENGTH_PER_DET << endl;
-    cout<<endl;
+void wrapper(float lambda,float *sin_table,float *cos_table,
+             const Parameter &args,const CTInput &in,CTOutput &out) {
+    for (int k = 0; k < args.NPROJ; ++k)
+    //for (int k = 270; k < 271; ++k)
+		for (int i = 0; i < args.NDX; ++i)
+			for (int j = 0; j < args.NDY; ++j) {
+				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
+                //cout << format("%1% %2% %3%") %k%i%j <<endl;
+            }
+}
+
+void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
+    float *cos_table = new float[args.NPROJ];
+    float *sin_table = new float[args.NPROJ];
+
+    for(int i = 0; i < args.NPROJ; i++) {
+        const float alpha = (float)i/args.NPROJ*2*PI;
+        sin_table[i] = sin(alpha);
+        cos_table[i] = cos(alpha);
+    }
+
+    max_numb = 0;
+
+    out.allocate_img(args.NX*args.NY*args.NZ);
+
+    float lambda = 0.005;
+    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
+        lambda = 1.0/(200.0+iters*20.0);
+
+        cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
+
+        wrapper(lambda,sin_table,cos_table, args,in,out);
+    }
+
+    cout<< max_numb << endl;
+
+    delete [] sin_table;
+    delete [] cos_table;
 }
 
 int main(int argc, char** argv) {
     Parameter args;
 
-    parse_config(args, argc, argv);
-    print_options(args);
+    args.parse_config(argc, argv);
+    args.print_options();
 
     CTInput in = CTInput(args);
     CTOutput out = CTOutput(args);
 
-    in.read_sino(RAW_DATA_FILE);
+    in.read_sino(args.RAW_DATA_FILE);
     ct3d(args,in,out);
-    out.write_img(OUTPUT_DIR);
+    out.write_img(args.OUTPUT_DIR);
 
     return 0;
 }
