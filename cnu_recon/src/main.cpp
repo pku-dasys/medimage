@@ -39,7 +39,7 @@ step 2: shift src and dst to right place
 */
 void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
              const Parameter &args, const CTInput &in, CTOutput &out) {
-    const float sina = sin_table[alpha], cosa = cos_table[alpha];
+    //const float sina = sin_table[alpha], cosa = cos_table[alpha];
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -68,35 +68,47 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
         rotate_2d(srcX, srcY, theta);
         rotate_2d(dstX, dstY, theta);
 
+	    srcX /= args.SAMPLESIZE;
+	    srcZ /= args.SAMPLESIZE;
+	    srcY /= args.SAMPLESIZE;
+	    dstX /= args.SAMPLESIZE;
+	    dstY /= args.SAMPLESIZE;
+	    dstZ /= args.SAMPLESIZE;
+
         srcX += args.HALFSIZE;
         srcY += args.HALFSIZE;
         dstX += args.HALFSIZE;
         dstY += args.HALFSIZE;
     }
     else if (args.BEAM=="Cone") {
-        float oridstX,oridstY;
+//        float oridstX,oridstY;
         srcZ = 0.0;
+        srcX = 0.0;
+        srcY = -args.SOD;
+        float theta = (float)alpha/args.NPROJ*2*PI;
+        rotate_2d(srcX, srcY, theta);
 
-        srcX = (-args.SOD * sina);
-        srcY = ( args.SOD * cosa);
-        oridstX = detectorX - args.NDX*0.5 + 0.5;
-        oridstX *= args.PIXELSIZE;
-        oridstY = (args.SOD - args.SDD);
-        dstX = oridstX * cosa - oridstY * sina;
-        dstY = oridstX * sina + oridstY * cosa;
+        dstX = detectorX - args.NDX*0.5 + 0.5;
+        dstX *= args.PIXELSIZE;
+        dstY = (args.SDD - args.SOD);
         dstZ = detectorY - args.NDY*0.5 + 0.5;
         dstZ *= args.PIXELSIZE;
+        rotate_2d(dstX, dstY, theta);
 
-        srcX += args.NX * args.PIXELSIZE/2.0;
-        srcY += args.NY * args.PIXELSIZE/2.0;
-        srcZ += args.NZ * args.PIXELSIZE/2.0;
-        dstX += args.NX * args.PIXELSIZE/2.0;
-        dstY += args.NY * args.PIXELSIZE/2.0;
-        dstZ += args.NZ * args.PIXELSIZE/2.0;
+	    srcX /= args.SAMPLESIZE;
+	    srcZ /= args.SAMPLESIZE;
+	    srcY /= args.SAMPLESIZE;
+	    dstX /= args.SAMPLESIZE;
+	    dstY /= args.SAMPLESIZE;
+	    dstZ /= args.SAMPLESIZE;
+
+        srcX += args.NX/2.0;
+        srcY += args.NY/2.0;
+        srcZ += args.NZ/2.0;
+        dstX += args.NX/2.0;
+        dstY += args.NY/2.0;
+        dstZ += args.NZ/2.0;
     }
-    srcX /= args.SAMPLESIZE;
-    srcZ /= args.SAMPLESIZE;
-    srcY /= args.SAMPLESIZE;
 
     //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
 
