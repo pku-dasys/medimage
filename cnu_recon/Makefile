@@ -13,7 +13,7 @@ ROOT_CCFLAGS = $(ROOT_INCL) -I$(ROOT_LIB) \
 							 -Wreorder -Wformat -Wunused \
 							 -I./include -fopenmp -std=c++11
 
-ROOT_LDFLAGS = -L$(ROOT_LIB) -fopenmp
+ROOT_LDFLAGS = -L$(ROOT_LIB) -fopenmp -lboost_system -lboost_filesystem
 
 ifeq ($(build), debug)
 ROOT_POSTFIX=.debug

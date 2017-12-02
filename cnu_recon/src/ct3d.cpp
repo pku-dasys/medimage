@@ -9,6 +9,7 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/filesystem.hpp>
 
 using namespace std;
 
@@ -94,6 +95,8 @@ img_type& CTOutput::img_data(int z,int x,int y) {
 
 void CTOutput::write_img(const string &output_dir) {
     cout<< "Start writing images ..." <<endl;
+    boost::filesystem::path dir(output_dir);
+    boost::filesystem::create_directory(dir);
     for (int z = 0; z<args.NZ; ++z) {
         string slice_output = output_dir+"/"+boost::lexical_cast<string>(z);
         ofstream fou(slice_output);

@@ -175,41 +175,6 @@ void test3() {
         fou.write((char*)(&prj[k*128*128]), sizeof(ushort) * size);
     fou.close();
 
-/*
-    for(int z = 0; z < 180; z++)
-    {
-        char buf[256];
-        snprintf(buf, 256, "origin_img_128x128x128/%d", z);
-        fou.open(buf, ios::out);
-        fou.precision(6);
-        for(int x = 0; x < 128; x++)
-        {
-            for(int y = 0; y < 128; y++)
-            {
-                fou << prj[z*128*128+x*128+y] << ' ';
-            }
-            fou << endl;
-        }
-        fou.close();
-    }
-    for(int z = 0; z < 360; z++)
-    {
-        char buf[256];
-        snprintf(buf, 256, "origin_img_128x128x128_prj/%d", z);
-        fou.open(buf, ios::out);
-        fou.precision(6);
-        for(int x = 0; x < 128; x++)
-        {
-            for(int y = 0; y < 128; y++)
-            {
-                fou << prj[z*128*128+x*128+y] << ' ';
-            }
-            fou << endl;
-        }
-        fou.close();
-    }
-*/
-
     delete [] img;
     delete [] prj;
 }
