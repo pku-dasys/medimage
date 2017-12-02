@@ -32,6 +32,15 @@ void keyhandler(int ch, int x, int y)
 	if(curz >= z) curz = z-1;
 	printf("current z = %d\n", curz);
 }
+void normalkeyhandler(unsigned char ch, int x, int y)
+{
+	switch(ch)
+	{
+		case 'q':
+		case 27://esc
+			exit(0);
+	}
+}
 static float inf()
 {
 	return 1.0/0.0;
@@ -92,6 +101,7 @@ int main(int argc, char **argv)
 	glutInitWindowPosition(200, 200);
 	glutCreateWindow("simple viewer");
 	glutSpecialFunc(keyhandler);
+	glutKeyboardFunc(normalkeyhandler);
 	glutDisplayFunc(mydisp);
 	glutIdleFunc(mydisp);
 	glutMainLoop();
