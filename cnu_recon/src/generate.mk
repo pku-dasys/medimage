@@ -3,7 +3,7 @@
 #ROOT_CCFLAGS := $(ROOT_CCFLAGS)
 
 MS3D_OUT = generate
-MS3D_SRC = generate.cpp tracing.cpp utility.cpp
+MS3D_SRC = generate.cpp tracing.cpp utility.cpp ct3d.cpp testcase/circle.cpp
 
 MS3D_LIB =
 all :: $(ROOT_BIN)/$(MS3D_OUT)

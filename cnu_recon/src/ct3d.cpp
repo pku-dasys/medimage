@@ -62,10 +62,14 @@ void Parameter::parse_config(int argc, char** argv) {
         printf("JSON file corrupted.\n");
         exit(1);
     }
+    derive();
+}
 
+void Parameter::derive() {
     // derive other parameters
     HALFDET = NDX/2;
     HALFSIZE = NX/2.0;
+    MAX_RAYLEN = NX*3;
 }
 
 void Parameter::print_options() {
@@ -96,6 +100,7 @@ img_type& CTOutput::img_data(int z,int x,int y) {
 void CTOutput::write_img(const string &output_dir) {
     cout<< "Start writing images ..." <<endl;
     boost::filesystem::path dir(output_dir);
+    if (!boost::filesystem::exists(dir))
     boost::filesystem::create_directory(dir);
     for (int z = 0; z<args.NZ; ++z) {
         string slice_output = output_dir+"/"+boost::lexical_cast<string>(z);

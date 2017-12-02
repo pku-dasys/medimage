@@ -1,23 +1,15 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 #include "tracing.h"
 #include "ct3d.h"
 #include "utility.h"
 
+#include "testcase.h"
+
 using namespace std;
-
-typedef unsigned short ushort;
-typedef long long int64;
-
-inline float sqr(float x) {
-    return x*x;
-}
-
-inline bool equals(float x,int y) {
-    return fabs(x-y)<1.25;
-}
 
 void wrapper1(float *img, ushort *prj, int a,int x,int y) {
     float srcX,srcY,srcZ;
@@ -67,43 +59,6 @@ void wrapper1(float *img, ushort *prj, int a,int x,int y) {
     delete[] wgt;
 }
 
-void test1() {
-    float *img = new float[128*128*128];
-    ushort *prj = new ushort[128*128];
-
-    for (int k = 0; k<128; ++k) {
-        for (int i = 0; i<128; ++i)
-            for (int j = 0; j<128; ++j) {
-                float dst = sqrt(sqr(i-64.0)+sqr(j-64.0));
-                if (equals(dst,24) || equals(dst,48) || equals(dst,36) || equals(dst,12) || equals(dst,60)) {
-                    img[k*128*128+i*128+j] = 0.2;
-                }
-                else img[k*128*128+i*128+j] = 0.0;
-            }
-    }
-
-    //ofstream pfile("test.txt");
-    for (int ndx = 0; ndx<128; ++ndx) {
-        for (int ndy = 0; ndy<128; ++ndy) {
-            wrapper1(img,prj,0,ndx,ndy);
-            //pfile<<prj[ndx*128+ndy]<<' ';
-        }
-        //pfile<<endl;
-    }
-    //pfile.close();
-
-    ofstream fou("test_360x128x128_128_parallel_circle.dr", ios::binary);
-    char empty[1024] = {};
-    fou.write(empty,1024);
-    int64_t size = (int64)128 * 128;
-    for (int k = 0; k<360; ++k)
-        fou.write((char*)prj, sizeof(ushort) * size);
-    fou.close();
-
-    delete [] img;
-    delete [] prj;
-}
-
 void test2() {
     float *img = new float[128*128*128];
     ushort *prj = new ushort[128*128];
@@ -112,7 +67,7 @@ void test2() {
         for (int i = 0; i<128; ++i)
             for (int j = 0; j<128; ++j) {
                 float dst = sqrt(sqr(i-64.0)+sqr(j-64.0)+sqr(k-64.0));
-                if (equals(dst,24) || equals(dst,48) || equals(dst,36) || equals(dst,12) || equals(dst,60)) {
+                if (equals_draw(dst,24) || equals_draw(dst,48) || equals_draw(dst,36) || equals_draw(dst,12) || equals_draw(dst,60)) {
                     img[k*128*128+i*128+j] = 0.2;
                 }
                 else img[k*128*128+i*128+j] = 0.0;
@@ -132,7 +87,7 @@ void test2() {
     ofstream fou("test_360x128x128_128_parallel_sphere.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
-    int64_t size = (int64)128 * 128;
+    int64_t size = 128 * 128;
     for (int k = 0; k<360; ++k)
         fou.write((char*)prj, sizeof(ushort) * size);
     fou.close();
@@ -149,7 +104,7 @@ void test3() {
         for (int i = 0; i<128; ++i)
             for (int j = 0; j<128; ++j) {
                 float dst = sqrt(sqr(1.2*(i-64.0))+sqr(0.8*(j-64.0))+sqr(k-64.0));
-                if (equals(dst,24) || equals(dst,36) || equals(dst,12) || equals(dst,48)) {
+                if (equals_draw(dst,24) || equals_draw(dst,36) || equals_draw(dst,12) || equals_draw(dst,48)) {
                     img[k*128*128+i*128+j] = 0.2;
                 }
                 else img[k*128*128+i*128+j] = 0.0;
@@ -170,7 +125,7 @@ void test3() {
     ofstream fou("test_360x128x128_128_parallel_ellipse.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
-    int64_t size = (int64)128 * 128;
+    int64_t size = 128 * 128;
     for (int k = 0; k<360; ++k)
         fou.write((char*)(&prj[k*128*128]), sizeof(ushort) * size);
     fou.close();
@@ -213,7 +168,7 @@ void test4() {
     ofstream fou("test_360x128x128_128_parallel_taiji.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
-    int64_t size = (int64)128 * 128;
+    int64_t size = 128 * 128;
     for (int k = 0; k<360; ++k)
         fou.write((char*)(&prj[k*128*128]), sizeof(ushort) * size);
     fou.close();
@@ -237,8 +192,25 @@ void test4() {
     delete [] prj;
 }
 
+void generate_parallel_circle() {
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_circle_json[] = "test_360x128x128_128_parallel_circle.json";
+
+    strcpy(json[1], parallel_circle_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    parallel_circle(args);
+}
+
 int main(int argc, char** argv) {
-    test1();
+
+    generate_parallel_circle();
+
     test2();
     test3();
     test4();

@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <cmath>
+
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
@@ -41,74 +43,12 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
-    if (args.BEAM=="Parallel") {
-        srcX = detectorY+0.5 - args.HALFDET;
-        srcX *= args.PIXELSIZE;
-        srcY = -args.SOD;
-
-        srcZ = args.NDX - detectorX - 1 - args.HALFDET;
-        srcZ *= args.PIXELSIZE;
-
-        
-        dstX = detectorY+0.5 - args.HALFDET;
-        dstX *= args.PIXELSIZE;
-        dstY = args.SDD-args.SOD;
-
-        dstZ = args.NDX - detectorX - 1 - args.HALFDET;
-        dstZ *= args.PIXELSIZE;
-
-        float theta = (float)alpha/args.NPROJ*2*PI;
-
-        // rotation
-        //rotate_axis_3d(srcX, srcY, srcZ, 0, 1, 0, theta);
-        //rotate_axis_3d(dstX, dstY, dstZ, 0, 1, 0, theta);
-        
-        rotate_2d(srcX, srcY, theta);
-        rotate_2d(dstX, dstY, theta);
-
-	    srcX /= args.SAMPLESIZE;
-	    srcY /= args.SAMPLESIZE;
-	    srcZ /= args.SAMPLESIZE;
-	    dstX /= args.SAMPLESIZE;
-	    dstY /= args.SAMPLESIZE;
-	    dstZ /= args.SAMPLESIZE;
-
-        srcX += args.HALFSIZE;
-        srcY += args.HALFSIZE;
-        srcZ += args.HALFSIZE;
-        dstX += args.HALFSIZE;
-        dstY += args.HALFSIZE;
-        dstZ += args.HALFSIZE;
-    }
-    else if (args.BEAM=="Cone") {
-//        float oridstX,oridstY;
-        srcZ = 0.0;
-        srcX = 0.0;
-        srcY = -args.SOD;
-        float theta = (float)alpha/args.NPROJ*2*PI;
-        rotate_2d(srcX, srcY, theta);
-
-        dstX = detectorX - args.NDX*0.5 + 0.5;
-        dstX *= args.PIXELSIZE;
-        dstY = (args.SDD - args.SOD);
-        dstZ = detectorY - args.NDY*0.5 + 0.5;
-        dstZ *= args.PIXELSIZE;
-        rotate_2d(dstX, dstY, theta);
-
-	    srcX /= args.SAMPLESIZE;
-	    srcZ /= args.SAMPLESIZE;
-	    srcY /= args.SAMPLESIZE;
-	    dstX /= args.SAMPLESIZE;
-	    dstY /= args.SAMPLESIZE;
-	    dstZ /= args.SAMPLESIZE;
-
-        srcX += args.NX/2.0;
-        srcY += args.NY/2.0;
-        srcZ += args.NZ/2.0;
-        dstX += args.NX/2.0;
-        dstY += args.NY/2.0;
-        dstZ += args.NZ/2.0;
-    }
+    if (args.BEAM=="Parallel")
+        parallel(args,alpha,detectorX,detectorY,
+                 srcX,srcY,srcZ,dstX,dstY,dstZ);
+    else if (args.BEAM=="Cone")
+        cone(args,alpha,detectorX,detectorY,
+             srcX,srcY,srcZ,dstX,dstY,dstZ);
 
     //cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
 

@@ -5,6 +5,80 @@
 
 using namespace std;
 
+void parallel(const Parameter &args,
+              int alpha, int detectorX, int detectorY,
+              float &srcX, float &srcY, float &srcZ,
+              float &dstX, float &dstY, float &dstZ) {
+    srcX = detectorY+0.5 - args.HALFDET;
+    srcX *= args.PIXELSIZE;
+    srcY = -args.SOD;
+
+    srcZ = args.NDX - detectorX - 1 - args.HALFDET;
+    srcZ *= args.PIXELSIZE;
+
+    dstX = detectorY+0.5 - args.HALFDET;
+    dstX *= args.PIXELSIZE;
+    dstY = args.SDD-args.SOD;
+
+    dstZ = args.NDX - detectorX - 1 - args.HALFDET;
+    dstZ *= args.PIXELSIZE;
+
+    float theta = (float)alpha/args.NPROJ*2*PI;
+
+    // rotation
+    //rotate_axis_3d(srcX, srcY, srcZ, 0, 1, 0, theta);
+    //rotate_axis_3d(dstX, dstY, dstZ, 0, 1, 0, theta);
+
+    rotate_2d(srcX, srcY, theta);
+    rotate_2d(dstX, dstY, theta);
+
+    srcX /= args.SAMPLESIZE;
+    srcY /= args.SAMPLESIZE;
+    srcZ /= args.SAMPLESIZE;
+    dstX /= args.SAMPLESIZE;
+    dstY /= args.SAMPLESIZE;
+    dstZ /= args.SAMPLESIZE;
+
+    srcX += args.HALFSIZE;
+    srcY += args.HALFSIZE;
+    srcZ += args.HALFSIZE;
+    dstX += args.HALFSIZE;
+    dstY += args.HALFSIZE;
+    dstZ += args.HALFSIZE;
+}
+
+void cone(const Parameter &args,
+          int alpha, int detectorX, int detectorY,
+          float &srcX, float &srcY, float &srcZ,
+          float &dstX, float &dstY, float &dstZ) {
+    srcZ = 0.0;
+    srcX = 0.0;
+    srcY = -args.SOD;
+    float theta = (float)alpha/args.NPROJ*2*PI;
+    rotate_2d(srcX, srcY, theta);
+
+    dstX = detectorX - args.NDX*0.5 + 0.5;
+    dstX *= args.PIXELSIZE;
+    dstY = (args.SDD - args.SOD);
+    dstZ = detectorY - args.NDY*0.5 + 0.5;
+    dstZ *= args.PIXELSIZE;
+    rotate_2d(dstX, dstY, theta);
+
+    srcX /= args.SAMPLESIZE;
+    srcZ /= args.SAMPLESIZE;
+    srcY /= args.SAMPLESIZE;
+    dstX /= args.SAMPLESIZE;
+    dstY /= args.SAMPLESIZE;
+    dstZ /= args.SAMPLESIZE;
+
+    srcX += args.NX/2.0;
+    srcY += args.NY/2.0;
+    srcZ += args.NZ/2.0;
+    dstX += args.NX/2.0;
+    dstY += args.NY/2.0;
+    dstZ += args.NZ/2.0;
+}
+
 #define LAMBDA_X(i, x_s, x_d, L) (L*((float)i-x_s)/(x_d-x_s))
 #define LAMBDA_Y(j, y_s, y_d, L) (L*((float)j-y_s)/(y_d-y_s))
 #define LAMBDA_Z(k, z_s, z_d, L) (L*((float)k-z_s)/(z_d-z_s))

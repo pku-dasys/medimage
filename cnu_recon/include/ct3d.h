@@ -20,7 +20,7 @@ public:
     int NDY_THICK, NDY_OFFSET;
     float SAMPLESIZE, PIXELSIZE;
 
-    static constexpr int MAX_RAYLEN = 4096;
+    int MAX_RAYLEN;
 
     int ITERATIONS;
 
@@ -51,6 +51,8 @@ public:
     void parse_config(int argc, char** argv);
     
     void print_options();
+
+    void derive();
 };
 
 // the output of the program

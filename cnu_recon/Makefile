@@ -4,7 +4,7 @@ ROOT_BIN = ./bin
 ROOT_SRC = ./src
 ROOT_LIB = ./lib
 
-ROOT_DIR = .
+ROOT_DIR = . testcase
 
 ROOT_VPATH = $(foreach DIR, $(ROOT_DIR), $(ROOT_SRC)/$(DIR))
 ROOT_INCL = $(foreach DIR, $(ROOT_DIR), -I$(ROOT_SRC)/$(DIR))
@@ -34,6 +34,7 @@ ROOT_BUILD = ./build$(ROOT_POSTFIX)
 all ::
 	if [ ! -d $(ROOT_BUILD) ]; then mkdir $(ROOT_BUILD) || exit 1 ; fi
 	if [ ! -d $(ROOT_BIN) ]; then mkdir $(ROOT_BIN) || exit 1 ; fi
+	$(foreach DIR, $(ROOT_DIR), mkdir -p $(ROOT_BUILD)/$(DIR))
 
 ROOT_CC = g++ ${ROOT_OPT}
 ROOT_LNK = g++ ${ROOT_OPT}
@@ -46,4 +47,3 @@ $(ROOT_BUILD)/%.o :: %.cpp
 	if $(ROOT_CC) -c $(ROOT_CCFLAGS) -MD -MT $@ -MP -MF $(ROOT_BUILD)/$*.CXXd $< -o $@; \
 		then mv -f "$(ROOT_BUILD)/$*.CXXd" "$(ROOT_BUILD)/$*.d" ; \
 		else rm -f "$(ROOT_BUILD)/$*.CXXd" ; exit 1 ; fi
-

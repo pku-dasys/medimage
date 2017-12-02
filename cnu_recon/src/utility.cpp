@@ -18,6 +18,10 @@
 
 using namespace std;
 
+bool equals_draw(float x,int y) {
+    return fabs(x-y)<1.25;
+}
+
 int64_t timer_us( void )
 {
 #ifdef WIN32
