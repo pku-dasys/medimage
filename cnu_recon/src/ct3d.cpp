@@ -55,6 +55,8 @@ void Parameter::parse_config(int argc, char** argv) {
         SDD = root.get<float>("SDD");
 
         THREAD_NUMB = root.get<int>("THREAD_NUMB");
+        SAMPLESIZE = root.get<float>("SAMPLESIZE");
+        PIXELSIZE = root.get<float>("PIXELSIZE");
 
         BEAM = root.get<string>("BEAM");
     }
@@ -77,7 +79,9 @@ void Parameter::print_options() {
     cout << "Number of detector row and channel: " << NDX << ", " << NDY << endl;
     cout << ITERATIONS << " iterations with " << THREAD_NUMB << " threads." << endl;
     cout << "Source to ISO and detectors: " << SOD << ", " << SDD << endl;
-    cout << "Length per detector: " << LENGTH_PER_DET << endl;
+//    cout << "Length per detector: " << LENGTH_PER_DET << endl;
+    cout << "Sample Size: " << SAMPLESIZE << endl;
+    cout << "Detector Pixel Size: " << PIXELSIZE << endl;
     cout<<endl;
 }
 

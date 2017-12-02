@@ -45,15 +45,19 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
 
     if (args.BEAM=="Parallel") {
         srcX = detectorY+0.5 - args.HALFSIZE;
+        srcX *= args.PIXELSIZE;
         srcY = -args.SOD;
 
         srcZ = args.NX - detectorX - 1;
+        srcZ *= args.PIXELSIZE;
 
         
         dstX = detectorY+0.5 - args.HALFSIZE;
+        dstX *= args.PIXELSIZE;
         dstY = args.SDD-args.SOD;
 
         dstZ = args.NX-detectorX-1;
+        dstZ *= args.PIXELSIZE;
 
         float theta = (float)alpha/args.NPROJ*2*PI;
 
@@ -76,18 +80,23 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
         srcX = (-args.SOD * sina);
         srcY = ( args.SOD * cosa);
         oridstX = detectorX - args.NDX*0.5 + 0.5;
+        oridstX *= args.PIXELSIZE;
         oridstY = (args.SOD - args.SDD);
         dstX = oridstX * cosa - oridstY * sina;
         dstY = oridstX * sina + oridstY * cosa;
         dstZ = detectorY - args.NDY*0.5 + 0.5;
+        dstZ *= args.PIXELSIZE;
 
-        srcX += args.NX/2.0;
-        srcY += args.NY/2.0;
-        //srcZ += NZ/2.0;
-        dstX += args.NX/2.0;
-        dstY += args.NY/2.0;
-        //dstZ += NZ/2.0;
+        srcX += args.NX * args.PIXELSIZE/2.0;
+        srcY += args.NY * args.PIXELSIZE/2.0;
+        srcZ += args.NZ * args.PIXELSIZE/2.0;
+        dstX += args.NX * args.PIXELSIZE/2.0;
+        dstY += args.NY * args.PIXELSIZE/2.0;
+        dstZ += args.NZ * args.PIXELSIZE/2.0;
     }
+    srcX /= args.SAMPLESIZE;
+    srcZ /= args.SAMPLESIZE;
+    srcY /= args.SAMPLESIZE;
 
     //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
 

@@ -18,6 +18,7 @@ public:
     int NX, NY, NZ;
     int NPROJ, NDX, NDY;
     int NDY_THICK, NDY_OFFSET;
+    float SAMPLESIZE, PIXELSIZE;
 
     const int MAX_RAYLEN = 4096;
 
@@ -27,7 +28,7 @@ public:
     float SDD;
 
     // [-1024, 1024] detectors
-    float LENGTH_PER_DET;
+    //float LENGTH_PER_DET;
 
     const float ALPHA = 0;
     const float BETA = 0;
