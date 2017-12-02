@@ -11,8 +11,6 @@
 #include <boost/property_tree/json_parser.hpp>
 
 using namespace std;
-using namespace boost;
-using namespace boost::property_tree;
 
 int max_numb;
 
@@ -110,7 +108,7 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
         dstZ += args.NZ/2.0;
     }
 
-    //cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+    //cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
 
     int64_t *ind = new int64_t[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
@@ -125,7 +123,7 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
 
     // if (alpha==270 && detectorX==0 && detectorY==0) {
     //     printf("%d %d %d\n",alpha,detectorX, detectorY);
-    //     cout << format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+    //     cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
     //     printf("%d\n",numb);
     //     for (int i = 0; i<numb; ++i) {
     //         int z,x,y;
@@ -157,7 +155,7 @@ void wrapper(float lambda,float *sin_table,float *cos_table,
 		for (int i = 0; i < args.NDX; ++i)
 			for (int j = 0; j < args.NDY; ++j) {
 				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
-                //cout << format("%1% %2% %3%") %k%i%j <<endl;
+                //cout << boost::format("%1% %2% %3%") %k%i%j <<endl;
             }
 }
 
@@ -175,11 +173,11 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
 
     out.allocate_img(args.NX*args.NY*args.NZ);
 
-    float lambda = 0.005;
+    float lambda = 0.01;
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(200.0+iters*20.0);
+        lambda = 1.0/(100.0+iters*2.0);
 
-        cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
+        cout << boost::format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
         wrapper(lambda,sin_table,cos_table, args,in,out);
     }

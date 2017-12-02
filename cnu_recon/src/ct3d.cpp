@@ -6,14 +6,11 @@
 #include <iostream>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 using namespace std;
-using namespace boost;
-using namespace boost::property_tree;
 
 /////////// Class  Parameter
 
@@ -27,11 +24,11 @@ void Parameter::parse_config(int argc, char** argv) {
         exit(1);
     }
 
-    ptree root;
+    boost::property_tree::ptree root;
     try {
         read_json(config_filename, root);
     }
-    catch (ptree_error &e) {
+    catch (boost::property_tree::ptree_error &e) {
         printf("Could not read from the JSON file.\n");
         exit(1);
     }
@@ -60,7 +57,7 @@ void Parameter::parse_config(int argc, char** argv) {
 
         BEAM = root.get<string>("BEAM");
     }
-    catch (ptree_error &e) {
+    catch (boost::property_tree::ptree_error &e) {
         printf("JSON file corrupted.\n");
         exit(1);
     }
@@ -98,7 +95,7 @@ img_type& CTOutput::img_data(int z,int x,int y) {
 void CTOutput::write_img(const string &output_dir) {
     cout<< "Start writing images ..." <<endl;
     for (int z = 0; z<args.NZ; ++z) {
-        string slice_output = output_dir+"/"+lexical_cast<string>(z);
+        string slice_output = output_dir+"/"+boost::lexical_cast<string>(z);
         ofstream fou(slice_output);
         fou.precision(6);
         for (int x = 0; x<args.NX; ++x) {

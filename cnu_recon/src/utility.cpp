@@ -16,7 +16,6 @@
 #include "ct3d.h"
 #include "utility.h"
 
-using namespace boost;
 using namespace std;
 
 int64_t timer_us( void )

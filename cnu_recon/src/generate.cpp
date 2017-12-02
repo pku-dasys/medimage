@@ -23,21 +23,28 @@ void wrapper1(float *img, ushort *prj, int a,int x,int y) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
-    srcX = y;
+    srcX = y+0.5-64.0;
     srcZ = 128-x-1;
     srcY = -450;
 
     
-    dstX = y;
+    dstX = y+0.5-64.0;
     dstZ = 128-x-1;
     dstY = 450;
+
     float theta = (float)a/360*2*PI;
+
     rotate_2d(srcX, srcY, theta);
     rotate_2d(dstX, dstY, theta);
 
     int64_t *ind = new int64_t[512];
     float *wgt = new float[512];
     int numb;
+
+    srcX += 64.0;
+    srcY += 64.0;
+    dstX += 64.0;
+    dstY += 64.0;
 
     Parameter args;
     args.NX = 128;
@@ -85,7 +92,7 @@ void test1() {
     }
     //pfile.close();
 
-    ofstream fou("test_360x128x128_128_parallel.dr", ios::out | ios::binary);
+    ofstream fou("test_360x128x128_128_parallel_circle.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
     int64_t size = (int64)128 * 128;
@@ -122,7 +129,7 @@ void test2() {
     }
     //pfile.close();
 
-    ofstream fou("test_360x128x128_128_parallel.dr", ios::out | ios::binary);
+    ofstream fou("test_360x128x128_128_parallel_sphere.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
     int64_t size = (int64)128 * 128;
@@ -160,7 +167,7 @@ void test3() {
     }
     //pfile.close();
 
-    ofstream fou("test_360x128x128_128_parallel.dr", ios::out | ios::binary | ios::trunc);
+    ofstream fou("test_360x128x128_128_parallel_ellipse.dr", ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
     int64_t size = (int64)128 * 128;
@@ -168,7 +175,7 @@ void test3() {
         fou.write((char*)(&prj[k*128*128]), sizeof(ushort) * size);
     fou.close();
 
-    for(int z = 0; z < 128; z++)
+    for(int z = 0; z < 180; z++)
     {
         char buf[256];
         snprintf(buf, 256, "origin_img_128x128x128/%d", z);
@@ -178,7 +185,24 @@ void test3() {
         {
             for(int y = 0; y < 128; y++)
             {
-                fou << img[z*128*128+x*128+y] << ' ';
+                fou << prj[z*128*128+x*128+y] << ' ';
+            }
+            fou << endl;
+        }
+        fou.close();
+    }
+
+    for(int z = 0; z < 360; z++)
+    {
+        char buf[256];
+        snprintf(buf, 256, "origin_img_128x128x128_prj/%d", z);
+        fou.open(buf, ios::out);
+        fou.precision(6);
+        for(int x = 0; x < 128; x++)
+        {
+            for(int y = 0; y < 128; y++)
+            {
+                fou << prj[z*128*128+x*128+y] << ' ';
             }
             fou << endl;
         }
@@ -190,8 +214,8 @@ void test3() {
 }
 
 int main(int argc, char** argv) {
-//    test1();
-//    test2();
+    test1();
+    test2();
     test3();
     return 0;
 }

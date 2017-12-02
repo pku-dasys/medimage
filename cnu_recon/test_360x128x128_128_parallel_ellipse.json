@@ -1,5 +1,5 @@
 {
-"RAW_DATA_FILE" : "test_360x128x128_128_parallel.dr",
+"RAW_DATA_FILE" : "test_360x128x128_128_parallel_ellipse.dr",
 
 "NX" : 128,
 "NY" : 128,
@@ -20,5 +20,5 @@
 "THREAD_NUMB" : 16,
 "ITERATIONS" : 1,
 
-"OUTPUT_DIR" : "test_360x128x128_128_parallel"
+"OUTPUT_DIR" : "test_360x128x128_128_parallel_ellipse"
 }

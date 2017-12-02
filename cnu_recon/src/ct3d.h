@@ -20,7 +20,7 @@ public:
     int NDY_THICK, NDY_OFFSET;
     float SAMPLESIZE, PIXELSIZE;
 
-    const int MAX_RAYLEN = 4096;
+    static constexpr int MAX_RAYLEN = 4096;
 
     int ITERATIONS;
 
@@ -30,9 +30,9 @@ public:
     // [-1024, 1024] detectors
     //float LENGTH_PER_DET;
 
-    const float ALPHA = 0;
-    const float BETA = 0;
-    const float EPSILON = 0.001;
+    static constexpr float ALPHA = 0;
+    static constexpr float BETA = 0;
+    static constexpr float EPSILON = 0.001;
 
     int THREAD_NUMB;
 
