@@ -175,6 +175,7 @@ void test3() {
         fou.write((char*)(&prj[k*128*128]), sizeof(ushort) * size);
     fou.close();
 
+/*
     for(int z = 0; z < 180; z++)
     {
         char buf[256];
@@ -191,7 +192,6 @@ void test3() {
         }
         fou.close();
     }
-
     for(int z = 0; z < 360; z++)
     {
         char buf[256];
@@ -208,6 +208,7 @@ void test3() {
         }
         fou.close();
     }
+*/
 
     delete [] img;
     delete [] prj;

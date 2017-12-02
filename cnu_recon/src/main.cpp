@@ -42,19 +42,19 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
     float dstX,dstY,dstZ;
 
     if (args.BEAM=="Parallel") {
-        srcX = detectorY+0.5 - args.HALFSIZE;
+        srcX = detectorY+0.5 - args.HALFDET;
         srcX *= args.PIXELSIZE;
         srcY = -args.SOD;
 
-        srcZ = args.NX - detectorX - 1;
+        srcZ = args.NDX - detectorX - 1 - args.HALFDET;
         srcZ *= args.PIXELSIZE;
 
         
-        dstX = detectorY+0.5 - args.HALFSIZE;
+        dstX = detectorY+0.5 - args.HALFDET;
         dstX *= args.PIXELSIZE;
         dstY = args.SDD-args.SOD;
 
-        dstZ = args.NX-detectorX-1;
+        dstZ = args.NDX - detectorX - 1 - args.HALFDET;
         dstZ *= args.PIXELSIZE;
 
         float theta = (float)alpha/args.NPROJ*2*PI;
@@ -67,16 +67,18 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
         rotate_2d(dstX, dstY, theta);
 
 	    srcX /= args.SAMPLESIZE;
-	    srcZ /= args.SAMPLESIZE;
 	    srcY /= args.SAMPLESIZE;
+	    srcZ /= args.SAMPLESIZE;
 	    dstX /= args.SAMPLESIZE;
 	    dstY /= args.SAMPLESIZE;
 	    dstZ /= args.SAMPLESIZE;
 
         srcX += args.HALFSIZE;
         srcY += args.HALFSIZE;
+        srcZ += args.HALFSIZE;
         dstX += args.HALFSIZE;
         dstY += args.HALFSIZE;
+        dstZ += args.HALFSIZE;
     }
     else if (args.BEAM=="Cone") {
 //        float oridstX,oridstY;
