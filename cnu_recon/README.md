@@ -10,5 +10,5 @@ We now only support test datasets using parallel beam.
 4. Or run `./viewer/viewer test_dir NX NY NZ` to show the images.
 
 # issue
-1. Only works well in model 1 & 2, but not in model 3 (4-layer ellipsoid)
 
+nothing now
