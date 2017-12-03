@@ -235,6 +235,7 @@ CTOutput::CTOutput(const Parameter &_args) : args(_args) {
 }
 CTOutput::~CTOutput() {
     if (img) delete [] img;
+    if (edge) delete [] edge;
 }
 
 /////////// Class  CTInput
