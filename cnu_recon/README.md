@@ -16,5 +16,5 @@ nothing now
 # TODO:
 
 1. Test Cone (Seems to be correct)
-2. Test Data
+2. Test Data and implement slice
 3. Improve Performence
