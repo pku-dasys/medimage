@@ -3,7 +3,8 @@
 #ROOT_CCFLAGS := $(ROOT_CCFLAGS)
 
 MS3D_OUT = generate
-MS3D_SRC = generate.cpp tracing.cpp utility.cpp ct3d.cpp testcase/circle.cpp
+MS3D_TEST = circle sphere ellipse taiji
+MS3D_SRC = generate.cpp tracing.cpp utility.cpp ct3d.cpp $(foreach TEST, $(MS3D_TEST), testcase/$(TEST).cpp)
 
 MS3D_LIB =
 all :: $(ROOT_BIN)/$(MS3D_OUT)

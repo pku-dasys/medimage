@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void wrapper_parallel_circle(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
+void wrapper_parallel_sphere(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -38,7 +38,7 @@ void wrapper_parallel_circle(const Parameter &args, float *img, ushort *prj, int
     delete[] wgt;
 }
 
-void parallel_circle(const Parameter &args) {
+void parallel_sphere(const Parameter &args) {
 
     boost::filesystem::path dr_file(args.RAW_DATA_FILE);
 
@@ -51,7 +51,7 @@ void parallel_circle(const Parameter &args) {
     for (int k = 0; k<args.NZ; ++k) {
         for (int i = 0; i<args.NX; ++i)
             for (int j = 0; j<args.NY; ++j) {
-                float dst = sqrt(sqr(i-args.HALFSIZE)+sqr(j-args.HALFSIZE));
+                float dst = sqrt(sqr(i-args.HALFSIZE)+sqr(j-args.HALFSIZE)+sqr(k-args.HALFSIZE));
                 if (equals_draw(dst,24) || equals_draw(dst,48) || equals_draw(dst,36) || equals_draw(dst,12) || equals_draw(dst,60)) {
                     img[k*args.NX*args.NY+i*args.NY+j] = 0.2;
                 }
@@ -61,7 +61,7 @@ void parallel_circle(const Parameter &args) {
 
     for (int ndx = 0; ndx<args.NDX; ++ndx) {
         for (int ndy = 0; ndy<args.NDY; ++ndy) {
-            wrapper_parallel_circle(args,img,prj,0,ndx,ndy);
+            wrapper_parallel_sphere(args,img,prj,0,ndx,ndy);
         }
     }
 

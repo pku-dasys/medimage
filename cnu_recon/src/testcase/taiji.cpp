@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void wrapper_parallel_circle(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
+void wrapper_parallel_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -38,7 +38,7 @@ void wrapper_parallel_circle(const Parameter &args, float *img, ushort *prj, int
     delete[] wgt;
 }
 
-void parallel_circle(const Parameter &args) {
+void parallel_taiji(const Parameter &args) {
 
     boost::filesystem::path dr_file(args.RAW_DATA_FILE);
 
@@ -46,22 +46,31 @@ void parallel_circle(const Parameter &args) {
         return;
 
     float *img = new float[args.NX*args.NY*args.NZ];
-    ushort *prj = new ushort[args.NDX*args.NDY];
+    ushort *prj = new ushort[args.NPROJ*args.NDX*args.NDY];
 
     for (int k = 0; k<args.NZ; ++k) {
-        for (int i = 0; i<args.NX; ++i)
+        for (int i = 0; i<args.NX; ++i) {
             for (int j = 0; j<args.NY; ++j) {
-                float dst = sqrt(sqr(i-args.HALFSIZE)+sqr(j-args.HALFSIZE));
-                if (equals_draw(dst,24) || equals_draw(dst,48) || equals_draw(dst,36) || equals_draw(dst,12) || equals_draw(dst,60)) {
+                const float sa = sin((float)k/args.NZ*2*PI), ca = cos((float)k/args.NZ*2*PI);
+                const float x = (i-args.HALFSIZE)*ca-(j-args.HALFSIZE)*sa,
+                            y = (j-args.HALFSIZE)*ca+(i-args.HALFSIZE)*sa;
+                const float dst1 = sqrt(sqr(x+args.HALFSIZE/2)+sqr(y)),
+                            dst2 = sqrt(sqr(x-args.HALFSIZE/2)+sqr(y)),
+                            dst3 = sqrt(sqr(x)+sqr(y));
+                if( (dst1 < args.HALFSIZE/4) ||
+                    (dst2 > args.HALFSIZE/4 && dst2 < args.HALFSIZE/2) ||
+                    (dst1 > args.HALFSIZE/2 && dst2 > args.HALFSIZE/2 && y >= 0 && dst3 < args.HALFSIZE))
                     img[k*args.NX*args.NY+i*args.NY+j] = 0.2;
-                }
                 else img[k*args.NX*args.NY+i*args.NY+j] = 0.0;
             }
+        }
     }
 
-    for (int ndx = 0; ndx<args.NDX; ++ndx) {
-        for (int ndy = 0; ndy<args.NDY; ++ndy) {
-            wrapper_parallel_circle(args,img,prj,0,ndx,ndy);
+    for(int a = 0; a < args.NPROJ; a++) {
+        for (int ndx = 0; ndx<args.NDX; ++ndx) {
+            for (int ndy = 0; ndy<args.NDY; ++ndy) {
+                wrapper_parallel_taiji(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy);
+            }
         }
     }
 
@@ -70,7 +79,7 @@ void parallel_circle(const Parameter &args) {
     fou.write(empty,1024);
     int64_t size = args.NDX * args.NDY;
     for (int k = 0; k<args.NPROJ; ++k)
-        fou.write((char*)prj, sizeof(ushort) * size);
+        fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
     fou.close();
 
     delete [] img;
