@@ -99,7 +99,8 @@ void CTOutput::allocate_img(int64_t size) {
 }
 
 void CTOutput::allocate_edge(int64_t size) {
-    edge = new edge_type[size]{};
+    edge = new edge_type[size];
+    for (int64_t i = 0; i<size; ++i) edge[i] = 1.0;
 }
 
 img_type& CTOutput::img_data(int z,int x,int y) {
@@ -140,7 +141,7 @@ void CTOutput::write_edge(const string &output_dir) {
         fou.precision(6);
         for (int x = 0; x<args.NX; ++x) {
             for (int y = 0; y<args.NY; ++y) {
-                fou<< img_data(z, x, y) << ' ';
+                fou<< edge_data(z, x, y) << ' ';
             }
             fou<<endl;
         }
@@ -165,7 +166,7 @@ float CTOutput::minIMAGE(float Af, int64_t *line, float *weight, int numb, float
         else             tmp += sqr(edge[ind])*(       0        -img[ind]);
         
         if (y+1<args.NY) tmp += sqr(edge[ind])*(img[ind+1]-img[ind]);
-        else             tmp += sqr(edge[ind])*(       0     -img[ind]);
+        else             tmp += sqr(edge[ind])*(     0    -img[ind]);
         
         if (x-1>=0)      tmp -= sqr(edge[ind-args.NY])*(img[ind]-img[ind-args.NY]);
         else             tmp -=                        (img[ind]-0        );
@@ -224,6 +225,7 @@ void CTOutput::minEDGE(int64_t *line, float *weight, int numb, float lambda) {
         int64_t ind = line[i];
         edge_type tmp = edge[ind] + lambda * d[i];
         if (tmp<0) tmp = 0;
+        if (tmp>1) tmp = 1;
         edge[ind] = tmp;
     }
     delete [] d;
