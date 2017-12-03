@@ -66,7 +66,7 @@ void taiji(const Parameter &args) {
                 if( (dst1 < args.HALFSIZE/4) ||
                     (dst2 > args.HALFSIZE/4 && dst2 < args.HALFSIZE/2) ||
                     (dst1 > args.HALFSIZE/2 && dst2 > args.HALFSIZE/2 && y >= 0 && dst3 < args.HALFSIZE))
-                    img[k*args.NX*args.NY+i*args.NY+j] = 0.2;
+                    img[k*args.NX*args.NY+i*args.NY+j] = 10;
                 else img[k*args.NX*args.NY+i*args.NY+j] = 0.0;
             }
         }
