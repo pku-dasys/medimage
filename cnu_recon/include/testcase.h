@@ -8,4 +8,4 @@ void parallel_sphere(const Parameter &args);
 
 void parallel_ellipse(const Parameter &args);
 
-void parallel_taiji(const Parameter &args);
+void taiji(const Parameter &args);

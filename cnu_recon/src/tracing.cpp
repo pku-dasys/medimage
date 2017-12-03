@@ -57,10 +57,10 @@ void cone(const Parameter &args,
     float theta = (float)alpha/args.NPROJ*2*PI;
     rotate_2d(srcX, srcY, theta);
 
-    dstX = detectorX - args.NDX*0.5 + 0.5;
+    dstX = detectorY - args.HALFDET + 0.5;
     dstX *= args.PIXELSIZE;
     dstY = (args.SDD - args.SOD);
-    dstZ = detectorY - args.NDY*0.5 + 0.5;
+    dstZ = args.NDX*0.5 - detectorX - 0.5;
     dstZ *= args.PIXELSIZE;
     rotate_2d(dstX, dstY, theta);
 

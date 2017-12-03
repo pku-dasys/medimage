@@ -11,12 +11,18 @@
 
 using namespace std;
 
-void wrapper_parallel_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
+void wrapper_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
-    parallel(args,a,x,y,
-            srcX,srcY,srcZ,dstX,dstY,dstZ);
+    if(args.BEAM == "Parallel")
+        parallel(args,a,x,y,
+                srcX,srcY,srcZ,dstX,dstY,dstZ);
+    else if(args.BEAM == "Cone")
+        cone(args,a,x,y,
+                srcX,srcY,srcZ,dstX,dstY,dstZ);
+    else
+        assert(false);
 
     int64_t *ind = new int64_t[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
@@ -38,7 +44,7 @@ void wrapper_parallel_taiji(const Parameter &args, float *img, ushort *prj, int 
     delete[] wgt;
 }
 
-void parallel_taiji(const Parameter &args) {
+void taiji(const Parameter &args) {
 
     boost::filesystem::path dr_file(args.RAW_DATA_FILE);
 
@@ -69,7 +75,7 @@ void parallel_taiji(const Parameter &args) {
     for(int a = 0; a < args.NPROJ; a++) {
         for (int ndx = 0; ndx<args.NDX; ++ndx) {
             for (int ndy = 0; ndy<args.NDY; ++ndy) {
-                wrapper_parallel_taiji(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy);
+                wrapper_taiji(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy);
             }
         }
     }
