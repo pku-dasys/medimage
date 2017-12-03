@@ -28,12 +28,9 @@ public:
     float SOD;
     float SDD;
 
-    // [-1024, 1024] detectors
-    //float LENGTH_PER_DET;
-
-    static constexpr float ALPHA = 0;
-    static constexpr float BETA = 0;
-    static constexpr float EPSILON = 0.001;
+    float ALPHA;
+    float BETA;
+    float EPSILON;
 
     int THREAD_NUMB;
 

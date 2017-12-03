@@ -43,11 +43,15 @@ void Parameter::parse_config(int argc, char** argv) {
         NX = root.get<int>("NX");
         NY = root.get<int>("NY");
         NZ = root.get<int>("NZ");
-        
+
+        ALPHA = root.get<float>("ALPHA");
+        BETA = root.get<float>("BETA");
+        EPSILON = root.get<float>("EPSILON");
+
         NDX = root.get<int>("NDX");
         NDY = root.get<int>("NDY");
         NPROJ = root.get<int>("NPROJ");
-        
+
         ITERATIONS = root.get<int>("ITERATIONS");
 
         SOD = root.get<float>("SOD");
