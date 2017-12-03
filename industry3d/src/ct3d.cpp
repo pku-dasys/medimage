@@ -1,4 +1,5 @@
 #include "ct3d.h"
+#include "utility.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -89,12 +90,20 @@ void Parameter::print_options() {
 
 /////////// Class  CTOutput
 
-void CTOutput::allocate_img(int size) {
+void CTOutput::allocate_img(int64_t size) {
     img = new img_type[size]{};
 }
 
+void CTOutput::allocate_edge(int64_t size) {
+    edge = new edge_type[size]{};
+}
+
 img_type& CTOutput::img_data(int z,int x,int y) {
-    return img[z*args.NX*args.NY+x*args.NY+y];
+    return img[(int64_t)z*args.NX*args.NY+x*args.NY+y];
+}
+
+edge_type& CTOutput::edge_data(int z,int x,int y) {
+    return edge[(int64_t)z*args.NX*args.NY+x*args.NY+y];
 }
 
 void CTOutput::write_img(const string &output_dir) {
@@ -103,7 +112,7 @@ void CTOutput::write_img(const string &output_dir) {
     if (!boost::filesystem::exists(dir))
     boost::filesystem::create_directory(dir);
     for (int z = 0; z<args.NZ; ++z) {
-        string slice_output = output_dir+"/"+boost::lexical_cast<string>(z);
+        string slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
         ofstream fou(slice_output);
         fou.precision(6);
         for (int x = 0; x<args.NX; ++x) {
@@ -116,16 +125,104 @@ void CTOutput::write_img(const string &output_dir) {
     }
 }
 
-void CTOutput::minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda) {
-    for (int i = 0; i<numb; i++) {
+void CTOutput::write_edge(const string &output_dir) {
+    cout<< "Start writing edges ..." <<endl;
+    boost::filesystem::path dir(output_dir);
+    if (!boost::filesystem::exists(dir))
+    boost::filesystem::create_directory(dir);
+    for (int z = 0; z<args.NZ; ++z) {
+        string slice_output = output_dir+"/e_"+boost::lexical_cast<string>(z);
+        ofstream fou(slice_output);
+        fou.precision(6);
+        for (int x = 0; x<args.NX; ++x) {
+            for (int y = 0; y<args.NY; ++y) {
+                fou<< img_data(z, x, y) << ' ';
+            }
+            fou<<endl;
+        }
+        fou.close();
+    }
+}
+
+float CTOutput::minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda) {
+    float *d = new float[args.MAX_RAYLEN];
+    for (int i = 0; i<numb; ++i) {
         Af += img[line[i]] * weight[i];
+    }
+    for (int i = 0; i<numb; ++i) {
+        int64_t ind = line[i];
+        int64_t plain = ind%(args.NX*args.NY);
+        int x = plain/args.NY, y = plain%args.NY;
+
+        float tmp = 0.;
+        float lap = 0.;
+        
+        if (x+1<args.NX) tmp += sqr(edge[ind])*(img[ind+args.NY]-img[ind]);
+        else             tmp += sqr(edge[ind])*(       0        -img[ind]);
+        
+        if (y+1<args.NY) tmp += sqr(edge[ind])*(img[ind+1]-img[ind]);
+        else             tmp += sqr(edge[ind])*(       0     -img[ind]);
+        
+        if (x-1>=0)      tmp -= sqr(edge[ind-args.NY])*(img[ind]-img[ind-args.NY]);
+        else             tmp -=                        (img[ind]-0        );
+        
+        if (y-1>=0)      tmp -= sqr(edge[ind-1])*(img[ind]-img[ind-1]);
+        else             tmp -=                  (img[ind]-0       );
+        
+        if (x+1<args.NX) lap += img[ind+args.NY];
+        if (y+1<args.NY) lap += img[ind+1];
+        if (x-1>=0)      lap += img[ind-args.NY];
+        if (y-1>=0)      lap += img[ind-1];
+        lap -= 4*img[ind];
+
+        d[i] = -Af*weight[i]+args.ALPHA*(tmp+sqr(args.EPSILON)*lap);
     }
     for (int i = 0; i<numb; i++) {
         int64_t ind = line[i];
-        img_type tmp = img[ind] + lambda * (-Af * weight[i]);
+        img_type tmp = img[ind] + lambda * d[i];
         if (tmp<0) tmp = 0;
         img[ind] = tmp;
     }
+    delete [] d;
+    return Af;
+}
+
+void CTOutput::minEDGE(int64_t *line, float *weight, int numb, float lambda) {
+    float *d = new float[args.MAX_RAYLEN];
+    for (int i = 0; i<numb; ++i) {
+        int64_t ind = line[i];
+        int64_t plain = ind%(args.NX*args.NY);
+        int x = plain/args.NY, y = plain%args.NY;
+
+        float a = 0.;
+        float b = 0.;
+        float c = 0.;
+
+        if (x-1>=0)      a += sqr(img[ind]-img[ind-args.NY]);
+        else             a += sqr(img[ind]-0        );
+        
+        if (y-1>=0)      a += sqr(img[ind]-img[ind-1]);
+        else             a += sqr(img[ind]-0       );
+        
+        a *= edge[ind];
+        
+        b = edge[ind]-1;
+
+        if (x+1<args.NX) c += edge[ind+args.NY];
+        if (y+1<args.NY) c += edge[ind+1];
+        if (x-1>=0)      c += edge[ind-args.NY];
+        if (y-1>=0)      c += edge[ind-1];
+        c -= 4*edge[ind];
+        
+        d[i] = -args.ALPHA*a-args.BETA/(4*args.EPSILON)*b+args.BETA*args.EPSILON*c;
+    }
+    for (int i = 0; i<numb; i++) {
+        int64_t ind = line[i];
+        edge_type tmp = edge[ind] + lambda * d[i];
+        if (tmp<0) tmp = 0;
+        edge[ind] = tmp;
+    }
+    delete [] d;
 }
 
 CTOutput::CTOutput(const Parameter &_args) : args(_args) {

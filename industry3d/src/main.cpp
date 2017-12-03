@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <omp.h>
+
 #include <cmath>
 
 #include <boost/foreach.hpp>
@@ -15,6 +17,9 @@
 using namespace std;
 
 int max_numb;
+float ave_numb;
+
+float Afg;
 
 /*
  Z-axis         
@@ -37,7 +42,8 @@ step 1: the center of the object is at the origin (0,0)
         then we calculate src and dst using rotate
 step 2: shift src and dst to right place
 */
-void compute(float lambda,float *sin_table,float *cos_table, int alpha, int detectorX, int detectorY,
+void compute(float lambda,float *sin_table,float *cos_table,
+             int alpha, int detectorX, int detectorY,
              const Parameter &args, const CTInput &in, CTOutput &out) {
     //const float sina = sin_table[alpha], cosa = cos_table[alpha];
     float srcX,srcY,srcZ;
@@ -62,29 +68,13 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
                  srcX, srcY, srcZ,
                  dstX, dstY, dstZ,
                  ind, wgt, numb);
-
-    // if (alpha==270 && detectorX==0 && detectorY==0) {
-    //     printf("%d %d %d\n",alpha,detectorX, detectorY);
-    //     cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-    //     printf("%d\n",numb);
-    //     for (int i = 0; i<numb; ++i) {
-    //         int z,x,y;
-    //         int64_t tmp = ind[i];
-    //         z = tmp/(args.NX*args.NY);
-    //         tmp %= args.NX*args.NY;
-    //         x = tmp/args.NY;
-    //         y = tmp%args.NY;
-    //         cout<<ind[i]<<endl;
-    //         printf("%lld,%f  -  %d %d %d\n",tmp,wgt[i],z, x, y);
-    //     }
-    //     printf("\n");
-    //     fflush(stdout);
-    //     exit(0);
-    // }
-    
+   
     if (max_numb<numb) max_numb = numb;
-    
-    out.minIMAGE(Af, ind, wgt, numb, lambda);
+    ave_numb += numb;
+
+    float tmp_Af = out.minIMAGE(Af, ind, wgt, numb, lambda);
+    out.minEDGE(ind, wgt, numb, lambda);
+    Afg += sqr(tmp_Af);
 
     delete[] ind;
     delete[] wgt;
@@ -93,8 +83,8 @@ void compute(float lambda,float *sin_table,float *cos_table, int alpha, int dete
 void wrapper(float lambda,float *sin_table,float *cos_table,
              const Parameter &args,const CTInput &in,CTOutput &out) {
     for (int k = 0; k < args.NPROJ; ++k)
-    //for (int k = 270; k < 271; ++k)
 		for (int i = 0; i < args.NDX; ++i)
+            //#pragma omp parallel for
 			for (int j = 0; j < args.NDY; ++j) {
 				compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
                 //cout << boost::format("%1% %2% %3%") %k%i%j <<endl;
@@ -114,17 +104,35 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
     max_numb = 0;
 
     out.allocate_img(args.NX*args.NY*args.NZ);
+    out.allocate_edge(args.NX*args.NY*args.NZ);
 
     float lambda = 0.01;
+
+    int64_t global_start = timer_s();
+
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
         lambda = 1.0/(100.0+iters*2.0);
 
         cout << boost::format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
+        ave_numb = 0;
+        Afg = 0;
+
+        int64_t start = timer_s();
         wrapper(lambda,sin_table,cos_table, args,in,out);
+        int64_t end = timer_s();
+        
+        ave_numb /= args.NPROJ*args.NDX*args.NDY;
+        cout << boost::format("||Af-g||^2 = %1%") % Afg <<endl;
+        cout << boost::format("time used = %1% seconds") % (end-start) <<endl;
+        cout << "-------------------------------------------" <<endl;
     }
 
-    cout<< max_numb << endl;
+    int64_t global_end = timer_s();
+    
+    cout << "===========================================" <<endl;
+    cout << boost::format("TOTAL time used = %1% seconds") % (global_end-global_start) <<endl;
+    cout<< boost::format("actual max raylen = %1%, average raylen = %2%") % max_numb % ave_numb << endl;
 
     delete [] sin_table;
     delete [] cos_table;
@@ -136,12 +144,16 @@ int main(int argc, char** argv) {
     args.parse_config(argc, argv);
     args.print_options();
 
+    omp_set_dynamic(0);
+    omp_set_num_threads(args.THREAD_NUMB);
+
     CTInput in = CTInput(args);
     CTOutput out = CTOutput(args);
 
     in.read_sino(args.RAW_DATA_FILE);
     ct3d(args,in,out);
     out.write_img(args.OUTPUT_DIR);
+    out.write_edge(args.OUTPUT_DIR);
 
     return 0;
 }

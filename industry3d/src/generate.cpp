@@ -78,7 +78,7 @@ void generate_cone_taiji()
     json[0] = new char[256]{};
     json[1] = new char[256]{};
 
-    char cone_taiji_json[] = "test_cone_taiji.json";
+    char cone_taiji_json[] = "test_360x256x256_128_cone_taiji.json";
 
     strcpy(json[1], cone_taiji_json);
     Parameter args;

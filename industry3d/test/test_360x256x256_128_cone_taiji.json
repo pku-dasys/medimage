@@ -17,8 +17,8 @@
 
 "BEAM" : "Cone",
 
-"THREAD_NUMB" : 16,
-"ITERATIONS" : 3,
+"THREAD_NUMB" : 8,
+"ITERATIONS" : 10,
 
 "OUTPUT_DIR" : "test_360x256x256_128_cone_taiji"
 }

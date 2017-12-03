@@ -34,7 +34,7 @@ ROOT_BUILD = ./build$(ROOT_POSTFIX)
 all ::
 	if [ ! -d $(ROOT_BUILD) ]; then mkdir $(ROOT_BUILD) || exit 1 ; fi
 	if [ ! -d $(ROOT_BIN) ]; then mkdir $(ROOT_BIN) || exit 1 ; fi
-	$(foreach DIR, $(ROOT_DIR), mkdir -p $(ROOT_BUILD)/$(DIR))
+	mkdir -p $(foreach DIR, $(ROOT_DIR), $(ROOT_BUILD)/$(DIR))
 
 ROOT_CC = g++ ${ROOT_OPT}
 ROOT_LNK = g++ ${ROOT_OPT}

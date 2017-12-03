@@ -12,6 +12,7 @@ typedef unsigned short ushort;
 
 typedef ushort sino_type;
 typedef float img_type;
+typedef float edge_type;
 
 class Parameter {
 public:
@@ -60,15 +61,20 @@ class CTOutput {
 public:
     // pointer to the reconstructed image
     img_type *img;
+    edge_type *edge;
     Parameter args;
 
-    void allocate_img(int size);
+    void allocate_img(int64_t size);
+    void allocate_edge(int64_t size);
 
     img_type& img_data(int z,int x,int y);
+    edge_type& edge_data(int z,int x,int y);
 
     void write_img(const string &output_dir);
+    void write_edge(const string &output_dir);
 
-    void minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda);
+    float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda);
+    void minEDGE(int64_t *line, float *weight, int numb, float lambda);
 
     CTOutput(const Parameter &_args);
     ~CTOutput();
