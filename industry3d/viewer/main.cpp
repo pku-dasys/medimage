@@ -51,7 +51,7 @@ void readdata()
 	float mini = inf(), maxi = -inf();
 	for(int i = 0; i < z; i++)
 	{
-		snprintf(buf, 1024, "%s/%d", dir, i);
+		snprintf(buf, 1024, "%s/e_%d", dir, i);
 		ifstream fin(buf, ios::in);
 		for(int j = y - 1; j >= 0; j--)
 		{
