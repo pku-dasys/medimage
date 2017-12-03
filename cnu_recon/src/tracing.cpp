@@ -13,14 +13,14 @@ void parallel(const Parameter &args,
     srcX *= args.PIXELSIZE;
     srcY = -args.SOD;
 
-    srcZ = args.NDX - detectorX - 1 - args.HALFDET;
+    srcZ = args.HALFDET - detectorX - 0.5;
     srcZ *= args.PIXELSIZE;
 
     dstX = detectorY+0.5 - args.HALFDET;
     dstX *= args.PIXELSIZE;
     dstY = args.SDD-args.SOD;
 
-    dstZ = args.NDX - detectorX - 1 - args.HALFDET;
+    dstZ = args.HALFDET - detectorX - 0.5;
     dstZ *= args.PIXELSIZE;
 
     float theta = (float)alpha/args.NPROJ*2*PI;
@@ -60,7 +60,7 @@ void cone(const Parameter &args,
     dstX = detectorY - args.HALFDET + 0.5;
     dstX *= args.PIXELSIZE;
     dstY = (args.SDD - args.SOD);
-    dstZ = args.NDX*0.5 - detectorX - 0.5;
+    dstZ = args.HALFDET - detectorX - 0.5;
     dstZ *= args.PIXELSIZE;
     rotate_2d(dstX, dstY, theta);
 
