@@ -20,9 +20,9 @@
 "THREAD_NUMB" : 8,
 "ITERATIONS" : 10,
 
-"ALPHA" : 1,
-"BETA" : 1,
-"EPSILON" : 0.001,
+"ALPHA" : 10,
+"BETA" : 0.001,
+"EPSILON" : 0.1,
 
 "OUTPUT_DIR" : "test_360x256x256_128_cone_taiji"
 }
