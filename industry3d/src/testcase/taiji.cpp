@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void wrapper_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,int y) {
+void wrapper_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,int y, int *bf,int *br) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -36,7 +36,11 @@ void wrapper_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,i
     float sum = 0;
 
     for (int i = 0; i<numb; ++i) {
-        sum += img[ind[i]]*wgt[i];
+        int64_t idx = ind[i];
+        sum += img[idx]*wgt[i];
+        idx /= args.NX*args.NY;
+        if (bf[idx]>x) bf[idx] = x;
+        if (br[idx]<x) br[idx] = x;
     }
 
     prj[x*args.NDY+y] = ushort(sum);
@@ -45,6 +49,14 @@ void wrapper_taiji(const Parameter &args, float *img, ushort *prj, int a,int x,i
 }
 
 void taiji(const Parameter &args) {
+
+    int *back_front = new int[args.NZ];
+    int *back_rear = new int[args.NZ];
+
+    for (int i = 0; i<args.NZ; ++i)
+        back_front[i] = args.NDX+1;
+    for (int i = 0; i<args.NZ; ++i)
+        back_rear[i] = -1;
 
     boost::filesystem::path dr_file(args.RAW_DATA_FILE);
 
@@ -75,18 +87,27 @@ void taiji(const Parameter &args) {
     for(int a = 0; a < args.NPROJ; a++) {
         for (int ndx = 0; ndx<args.NDX; ++ndx) {
             for (int ndy = 0; ndy<args.NDY; ++ndy) {
-                wrapper_taiji(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy);
+                wrapper_taiji(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy, back_front, back_rear);
             }
         }
     }
 
-    ofstream fou(args.RAW_DATA_FILE, ios::binary);
+    ofstream fou;
+    fou.open(args.RAW_DATA_FILE, ios::binary);
     char empty[1024] = {};
     fou.write(empty,1024);
     int64_t size = args.NDX * args.NDY;
     for (int k = 0; k<args.NPROJ; ++k)
         fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
     fou.close();
+
+    fou.open(args.PRETRACING_FILE);
+    for (int i = 0; i<args.NZ; ++i)
+        fou<<back_front[i]<<' '<<back_rear[i]<<endl;
+    fou.close();
+
+    delete [] back_front;
+    delete [] back_rear;
 
     delete [] img;
     delete [] prj;

@@ -16,9 +16,9 @@ typedef float edge_type;
 
 class Parameter {
 public:
-    int NX, NY, NZ;
-    int NPROJ, NDX, NDY;
-    int NDY_THICK, NDY_OFFSET;
+    int64_t NX, NY, NZ;
+    int64_t NPROJ, NDX, NDY;
+    //int NDY_THICK, NDY_OFFSET;
     float SAMPLESIZE, PIXELSIZE;
 
     int MAX_RAYLEN;
@@ -43,6 +43,7 @@ public:
     string BEAM;
 
     string RAW_DATA_FILE;
+    string PRETRACING_FILE;
 
     string OUTPUT_DIR;
 
@@ -83,12 +84,14 @@ public:
     // pointer to the sinogram
     sino_type *sino;
     Parameter args;
+    int *back_front,*back_rear;
 
     void allocate_sino(int64_t size);
 
     sino_type sino_data(int p,int x,int y) const;
 
     void read_sino(const string &raw_data_file);
+    void read_pretracing(const string &pretracing_file);
 
     CTInput(const Parameter &_args);
     ~CTInput();

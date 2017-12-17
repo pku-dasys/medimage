@@ -37,6 +37,7 @@ void Parameter::parse_config(int argc, char** argv) {
 
     try {
         RAW_DATA_FILE = root.get<string>("RAW_DATA_FILE");
+        PRETRACING_FILE = root.get<string>("PRETRACING_FILE");
 
         OUTPUT_DIR = root.get<string>("OUTPUT_DIR");
 
@@ -149,88 +150,6 @@ void CTOutput::write_edge(const string &output_dir) {
     }
 }
 
-float CTOutput::minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda) {
-    float *d = new float[args.MAX_RAYLEN];
-    for (int i = 0; i<numb; ++i) {
-        Af += img[line[i]] * weight[i];
-    }
-    for (int i = 0; i<numb; ++i) {
-        int64_t ind = line[i];
-        int64_t plain = ind%(args.NX*args.NY);
-        int x = plain/args.NY, y = plain%args.NY;
-
-        float tmp = 0.;
-        float lap = 0.;
-        
-        if (x+1<args.NX) tmp += sqr(edge[ind])*(img[ind+args.NY]-img[ind]);
-        else             tmp += sqr(edge[ind])*(       0        -img[ind]);
-        
-        if (y+1<args.NY) tmp += sqr(edge[ind])*(img[ind+1]-img[ind]);
-        else             tmp += sqr(edge[ind])*(     0    -img[ind]);
-        
-        if (x-1>=0)      tmp -= sqr(edge[ind-args.NY])*(img[ind]-img[ind-args.NY]);
-        else             tmp -=                        (img[ind]-0        );
-        
-        if (y-1>=0)      tmp -= sqr(edge[ind-1])*(img[ind]-img[ind-1]);
-        else             tmp -=                  (img[ind]-0       );
-        
-        if (x+1<args.NX) lap += img[ind+args.NY];
-        if (y+1<args.NY) lap += img[ind+1];
-        if (x-1>=0)      lap += img[ind-args.NY];
-        if (y-1>=0)      lap += img[ind-1];
-        lap -= 4*img[ind];
-
-        d[i] = -Af*weight[i]+args.ALPHA*(tmp+sqr(args.EPSILON)*lap);
-    }
-    for (int i = 0; i<numb; i++) {
-        int64_t ind = line[i];
-        img_type tmp = img[ind] + lambda * d[i];
-        if (tmp<0) tmp = 0;
-        img[ind] = tmp;
-    }
-    delete [] d;
-    return Af;
-}
-
-void CTOutput::minEDGE(int64_t *line, float *weight, int numb, float lambda) {
-    float *d = new float[args.MAX_RAYLEN];
-    for (int i = 0; i<numb; ++i) {
-        int64_t ind = line[i];
-        int64_t plain = ind%(args.NX*args.NY);
-        int x = plain/args.NY, y = plain%args.NY;
-
-        float a = 0.;
-        float b = 0.;
-        float c = 0.;
-
-        if (x-1>=0)      a += sqr(img[ind]-img[ind-args.NY]);
-        else             a += sqr(img[ind]-0        );
-        
-        if (y-1>=0)      a += sqr(img[ind]-img[ind-1]);
-        else             a += sqr(img[ind]-0       );
-        
-        a *= edge[ind];
-        
-        b = edge[ind]-1;
-
-        if (x+1<args.NX) c += edge[ind+args.NY];
-        if (y+1<args.NY) c += edge[ind+1];
-        if (x-1>=0)      c += edge[ind-args.NY];
-        if (y-1>=0)      c += edge[ind-1];
-        c -= 4*edge[ind];
-        
-        d[i] = -args.ALPHA*a-args.BETA/(4*args.EPSILON)*b+args.BETA*args.EPSILON*c;
-    }
-    for (int i = 0; i<numb; i++) {
-        int64_t ind = line[i];
-        edge_type tmp = edge[ind] + lambda * d[i];
-        if (tmp<0) tmp = 0;
-        if (tmp>1) tmp = 1;
-        edge[ind] = tmp;
-    }
-    delete [] d;
-}
-
 CTOutput::CTOutput(const Parameter &_args) : args(_args) {
 }
 CTOutput::~CTOutput() {
@@ -245,7 +164,7 @@ void CTInput::allocate_sino(int64_t size) {
 }
 
 sino_type CTInput::sino_data(int p,int x,int y) const {
-    return sino[p*args.NDX*args.NDY+x*args.NDY+y];
+    return sino[(int64_t)p*args.NDX*args.NDY+x*args.NDY+y];
 }
 
 void CTInput::read_sino(const string &raw_data_file) {
@@ -259,8 +178,23 @@ void CTInput::read_sino(const string &raw_data_file) {
     fin.close();
 }
 
+void CTInput::read_pretracing(const string &pretracing_file) {
+    ifstream fin(pretracing_file, ios::in);
+
+    back_front = new int[args.NZ];
+    back_rear = new int[args.NZ];
+
+    for (int i = 0; i<args.NZ; ++i)
+        fin >> back_front[i] >> back_rear[i];
+
+    fin.close();
+
+}
+
 CTInput::CTInput(const Parameter &_args) : args(_args) {
 }
 CTInput::~CTInput() {
     if (sino) delete [] sino;
+    if (back_front) delete [] back_front;
+    if (back_rear) delete [] back_rear;
 }
