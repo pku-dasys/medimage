@@ -62,8 +62,7 @@ public:
     edge_type *edge;
     Parameter args;
 
-    void allocate_img(int64_t size);
-    void allocate_edge(int64_t size);
+    void allocate();
 
     img_type& img_data(int z,int x,int y);
     edge_type& edge_data(int z,int x,int y);

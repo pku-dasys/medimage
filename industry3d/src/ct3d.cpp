@@ -37,7 +37,7 @@ void Parameter::parse_config(int argc, char** argv) {
 
     try {
         RAW_DATA_FILE = root.get<string>("RAW_DATA_FILE");
-        PRETRACING_FILE = root.get<string>("PRETRACING_FILE");
+        //PRETRACING_FILE = root.get<string>("PRETRACING_FILE");
 
         OUTPUT_DIR = root.get<string>("OUTPUT_DIR");
 
@@ -95,25 +95,23 @@ void Parameter::print_options() {
 
 /////////// Class  CTOutput
 
-void CTOutput::allocate_img(int64_t size) {
+void CTOutput::allocate() {
+    int64_t size = (args.NX+2)*(args.NY+2)*(args.NZ+2);
     img = new img_type[size]{};
-}
-
-void CTOutput::allocate_edge(int64_t size) {
     edge = new edge_type[size];
     for (int64_t i = 0; i<size; ++i) edge[i] = 1.0;
 }
 
 img_type& CTOutput::img_data(int z,int x,int y) {
-    return img[(int64_t)z*args.NX*args.NY+x*args.NY+y];
+    return img[(z+1)*(args.NX+2)*(args.NY+2)+(x+1)*(args.NY+2)+(y+1)];
 }
 
 edge_type& CTOutput::edge_data(int z,int x,int y) {
-    return edge[(int64_t)z*args.NX*args.NY+x*args.NY+y];
+    return edge[(z+1)*(args.NX+2)*(args.NY+2)+(x+1)*(args.NY+2)+(y+1)];
 }
 
 void CTOutput::write_img(const string &output_dir) {
-    cout<< "Start writing images ..." <<endl;
+    cout<< "Start writing images ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
     boost::filesystem::create_directory(dir);
@@ -129,10 +127,11 @@ void CTOutput::write_img(const string &output_dir) {
         }
         fou.close();
     }
+    cout<< "done." <<endl;
 }
 
 void CTOutput::write_edge(const string &output_dir) {
-    cout<< "Start writing edges ..." <<endl;
+    cout<< "Start writing edges ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
     boost::filesystem::create_directory(dir);
@@ -148,9 +147,12 @@ void CTOutput::write_edge(const string &output_dir) {
         }
         fou.close();
     }
+    cout<< "done." <<endl;
 }
 
 CTOutput::CTOutput(const Parameter &_args) : args(_args) {
+    img = nullptr;
+    edge = nullptr;
 }
 CTOutput::~CTOutput() {
     if (img) delete [] img;
@@ -164,7 +166,7 @@ void CTInput::allocate_sino(int64_t size) {
 }
 
 sino_type CTInput::sino_data(int p,int x,int y) const {
-    return sino[(int64_t)p*args.NDX*args.NDY+x*args.NDY+y];
+    return sino[p*args.NDX*args.NDY+x*args.NDY+y];
 }
 
 void CTInput::read_sino(const string &raw_data_file) {
@@ -192,6 +194,9 @@ void CTInput::read_pretracing(const string &pretracing_file) {
 }
 
 CTInput::CTInput(const Parameter &_args) : args(_args) {
+    sino = nullptr;
+    back_front = nullptr;
+    back_rear = nullptr;
 }
 CTInput::~CTInput() {
     if (sino) delete [] sino;

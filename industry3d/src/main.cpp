@@ -46,13 +46,21 @@ step 2: shift src and dst to right place
 
 float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda,
                const Parameter &args, const CTInput &in, CTOutput &out);
+
 void minEDGE(int64_t *line, float *weight, int numb, float lambda,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void compute(float lambda,float *sin_table,float *cos_table,
-             int alpha, int detectorX, int detectorY,
-             const Parameter &args, const CTInput &in, CTOutput &out) {
-    //const float sina = sin_table[alpha], cosa = cos_table[alpha];
+void gdIMAGE(float lambda, int np, int ndx,
+              int64_t *ind, float *wgt, int *numb,
+              const Parameter &args, const CTInput &in, CTOutput &out);
+
+void gdEDGE(float lambda,
+             int64_t *ind, float *wgt, int *numb,
+             const Parameter &args, const CTInput &in, CTOutput &out);
+
+void get_tracing(int alpha,int detectorX,int detectorY,
+                 int64_t *ind,float *wgt,int &numb,
+                 const Parameter &args) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -63,21 +71,26 @@ void compute(float lambda,float *sin_table,float *cos_table,
         cone(args,alpha,detectorX,detectorY,
              srcX,srcY,srcZ,dstX,dstY,dstZ);
 
-    //cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
+    forward_proj(args,
+                 srcX, srcY, srcZ,
+                 dstX, dstY, dstZ,
+                 ind, wgt, numb);
+}
+
+void compute_single(float lambda, int alpha, int detectorX, int detectorY,
+                    const Parameter &args, const CTInput &in, CTOutput &out) {
 
     int64_t *ind = new int64_t[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
     int numb;
 
-    float Af = -in.sino_data(alpha, detectorX, detectorY);
+    get_tracing(alpha, detectorX, detectorY,
+                ind, wgt, numb, args);
 
-    forward_proj(args,
-                 srcX, srcY, srcZ,
-                 dstX, dstY, dstZ,
-                 ind, wgt, numb);
-   
     if (max_numb<numb) max_numb = numb;
     ave_numb += numb;
+
+    float Af = -in.sino_data(alpha, detectorX, detectorY);
 
     minIMAGE(Af, ind, wgt, numb, lambda, args,in,out);
     minEDGE(ind, wgt, numb, lambda, args,in,out);
@@ -86,259 +99,66 @@ void compute(float lambda,float *sin_table,float *cos_table,
     delete[] wgt;
 }
 
-/*
-void Akernel(sino_type &Af, img_type *f,
-             int alpha, int detectorX, int detectorY,
+void compute(float lambda, int np, int ndx,
              const Parameter &args, const CTInput &in, CTOutput &out) {
-    float srcX,srcY,srcZ;
-    float dstX,dstY,dstZ;
+    int64_t *ind = new int64_t[args.NDY*args.MAX_RAYLEN];
+    float *wgt = new float[args.NDY*args.MAX_RAYLEN];
+    int *numb = new int[args.NDY];
 
-    if (args.BEAM=="Parallel")
-        parallel(args,alpha,detectorX,detectorY,
-                 srcX,srcY,srcZ,dstX,dstY,dstZ);
-    else if (args.BEAM=="Cone")
-        cone(args,alpha,detectorX,detectorY,
-             srcX,srcY,srcZ,dstX,dstY,dstZ);
-
-    //cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-
-    int64_t *ind = new int64_t[args.MAX_RAYLEN];
-    float *wgt = new float[args.MAX_RAYLEN];
-    int numb;
-
-    float Af = -in.sino_data(alpha, detectorX, detectorY);
-
-    forward_proj(args,
-                 srcX, srcY, srcZ,
-                 dstX, dstY, dstZ,
-                 ind, wgt, numb);
-
-    Af = 0;
-    for (int i = 0; i<numb; ++i) {
-        int64_t idx = ind[i];
-        idx %= args.NX*args.NY;
-        int64_t nx,ny;
-        nx = idx/args.NY;
-        ny = idx%args.NY;
-        Af += f[(nx+1)*(args.NY+2)+(ny+1)]*wgt[i];
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        get_tracing(np, ndx, ndy,
+                    ind+ndy*args.MAX_RAYLEN, wgt+ndy*args.MAX_RAYLEN, numb[ndy],
+                    args);
+        if (max_numb<numb[ndy]) max_numb = numb[ndy];
+        ave_numb += numb[ndy];
     }
 
-    delete[] ind;
-    delete[] wgt;
+    gdIMAGE(lambda, np, ndx,
+            ind, wgt, numb,
+            args, in, out);
+
+    gdEDGE(lambda, ind, wgt, numb,
+           args, in, out);
+
+    delete [] ind;
+    delete [] wgt;
+    delete [] numb;
 }
 
-void AStarkernel(sino_type &Af, img_type *f,
-                 int alpha, int detectorX, int detectorY,
-                 const Parameter &args, const CTInput &in, CTOutput &out) {
-    float srcX,srcY,srcZ;
-    float dstX,dstY,dstZ;
-
-    if (args.BEAM=="Parallel")
-        parallel(args,alpha,detectorX,detectorY,
-                 srcX,srcY,srcZ,dstX,dstY,dstZ);
-    else if (args.BEAM=="Cone")
-        cone(args,alpha,detectorX,detectorY,
-             srcX,srcY,srcZ,dstX,dstY,dstZ);
-
-    //cout << boost::format("%1%  :  %2% %3% %4%     %5% %6% %7%") %alpha%srcX%srcY%srcZ%dstX%dstY%dstZ <<endl;
-
-    int64_t *ind = new int64_t[args.MAX_RAYLEN];
-    float *wgt = new float[args.MAX_RAYLEN];
-    int numb;
-
-    float Af = -in.sino_data(alpha, detectorX, detectorY);
-
-    forward_proj(args,
-                 srcX, srcY, srcZ,
-                 dstX, dstY, dstZ,
-                 ind, wgt, numb);
-
-    for (int i = 0; i<numb; ++i) {
-        int64_t idx = ind[i];
-        idx %= args.NX*args.NY;
-        int64_t nx,ny;
-        nx = idx/args.NY;
-        ny = idx%args.NY;
-        f[(nx+1)*(args.NY+2)+(ny+1)] += Af*wgt[i];
-    }
-
-    delete[] ind;
-    delete[] wgt;
-}
-
-void A(sino_type *Af, img_type *f,
-       int np, int _back_front, int _back_rear,
-       const Parameter &args, const CTInput &in, CTOutput &out) {
-    for (int ndx = _back_front; ndx<=_back_rear; ++ndx)
-        for (int ndy = 0; ndy<args.NDY; ++ndy) {
-            Akernel(Af[(ndx-_back_front)*args.NDY+ndy], f, np,ndx,ndy, args,in,out);
-        }
-}
-
-void AStar(sino_type *Af, img_type *f,
-           int np, int _back_front, int _back_rear,
-           const Parameter &args, const CTInput &in, CTOutput &out) {
-    for (int ndx = _back_front; ndx<=_back_rear; ++ndx)
-        for (int ndy = 0; ndy<args.NDY; ++ndy) {
-            AStarkernel(Af[(ndx-_back_front)*args.NDY+ndy], f, np,ndx,ndy, args,in,out);
-        }
-}
-
-void compute(float lambda,float *sin_table,float *cos_table,
-             int np, int z,
-             const Parameter &args, const CTInput &in, CTOutput &out) {
-    //const float sina = sin_table[alpha], cosa = cos_table[alpha];
-
-    _back_front = in.back_front[z];
-    _back_rear = in.back_rear[z];
-
-    img_type *f = new img_type[(args.NX+2)*(args.NY+2)];
-    edge_type *v = new edge_type[(args.NX+2)*(args.NY+2)];
-    sino_type *g = new sino_type[(_back_rear-_back_front+1)*args.NDY];
-
-    for (int i = 0; i<(args.NX+2)*(args.NY+2); ++i) {
-        f[i] = 0.;
-        v[i] = 1.0;
-    }
-
-    img_type *__f = &out.img[z*args.NX*args.NY];
-    edge_type *__v = &out.edge[z*args.NX*args.NY];
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++i) {
-            f[i*(args.NY+2)+j] = __f[(i-1)*args.NY+(j-1)];
-            v[i*(args.NY+2)+j] = __v[(i-1)*args.NY+(j-1)];
-        }
-    for (int ndx = _back_front; ndx<=_back_rear; ++ndx)
-        for (int ndy = 0; ndy<args.NDY; ++ndy)
-            g[(ndx-_back_front)*args.NDY+ndy] = in.sino_data(np,ndx,ndy);
-
-    // IMAGE first
-
-    // r = g-Af
-    sino_type *Af = new sino_type[(_back_rear-_back_front+1)*args.NDY];
-    sino_type *r = new sino_type[(_back_rear-_back_front+1)*args.NDY];
-    A(Af, f, np, _back_front, _back_rear, args,in,out);
-    for (int i = 0; i<(_back_rear-_back_front+1)*args.NDY; ++i)
-        r[i] = g[i]-Af[i];
-
-    // d = A*(r)
-    img_type *d = new img_type[(args.NX+2)*(args.NY+2)];
-    for (int i = 0; i<(args.NX+2)*(args.NY+2); ++i) d[i] = 0;
-    AStar(r, d, np, _back_front, _back_rear, args,in,out);
-
-    // d += alpha*(v^2 \nabla f) + e^2 \laplace f
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++j) {
-            d[i*(args.NY+2)] += args.ALPHA*(
-                +sqr(v[i    *(args.NY+2)+j    ])*(f[(i+1)*(args.NY+2)+j    ]-f[i    *(args.NY+2)+j    ])
-                +sqr(v[i    *(args.NY+2)+j    ])*(f[i    *(args.NY+2)+(j+1)]-f[i    *(args.NY+2)+j    ])
-                -sqr(v[(i-1)*(args.NY+2)+j    ])*(f[i    *(args.NY+2)+j    ]-f[(i-1)*(args.NY+2)+j    ])
-                -sqr(v[i    *(args.NY+2)+(j-1)])*(f[i    *(args.NY+2)+j    ]-f[i    *(args.NY+2)+(j-1)])
-                +0.01*sqr(args.EPSILON)*(
-                    +  f[(i+1)*(args.NY+2)+j    ]
-                    +  f[i    *(args.NY+2)+(j+1)]
-                    -4*f[i    *(args.NY+2)+j    ]
-                    +  f[(i-1)*(args.NY+2)+j    ]
-                    +  f[i    *(args.NY+2)+(j-1)]
-            );
-        }
-
-    img_type *p = new img_type[(args.NX+2)*(args.NY+2)];
-    sino_type *q = new sino_type[(_back_rear-_back_front+1)*args.NDY];
-
-    // p = d
-    for (int i = 0; i<(args.NX+2)*(args.NY+2); ++i) p[i] = d[i];
-
-    A(q, p, np, _back_front, _back_rear, args,in,out);
-
-    float nV_KepsNablap = 0;
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++j) {
-            nV_KepsNablap += (sqr(v[i*(args.NY+2)+j])+0.01*sqr(args.EPSILON))*(
-                sqr(p[i*(args.NY+2)+j]-p[(i-1)*(args.NY+2)+j])
-                +sqr(p[i*(args.NY+2)+j]-p[i*(args.NY+2)+(j-1)])
-            );
-        }
-    float pSkalard = 0;
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++j)
-            pSkalard += p[i*(args.NY+2)+j]*d[i*(args.NY+2)+j];
-    float normAp = 0;
-    for (int i = 0; i<(_back_rear-_back_front+1)*args.NDY; ++i)
-        normAp += sqr(q[i]);
-    float c_1 = pSkalard/(normAp+args.ALPHA*nV_KepsNablap);
-
-    // update f
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++j) {
-            f[i*(args.NY+2)+j] += c_1 * p[i*(args.NY+2)+j];
-
-
-
-    // write back
-    for (int i = 1; i<=args.NX; ++i)
-        for (int j = 1; j<=args.NY; ++i) {
-            __f[(i-1)*args.NY+(j-1)] = f[i*(args.NY+2)+j];
-            __v[(i-1)*args.NY+(j-1)] = v[i*(args.NY+2)+j];
-        }
-
-    delete [] p;
-    delete [] q;
-
-    delete [] Af;
-    delete [] r;
-    delete [] d;
-
-    delete [] f;
-    delete [] v;
-    delete [] g;
-}
-*/
-
-void wrapper(float lambda,float *sin_table,float *cos_table,
-             const Parameter &args,const CTInput &in,CTOutput &out) {
+void wrapper_single(float lambda, const Parameter &args,const CTInput &in,CTOutput &out) {
     for (int k = 0; k < args.NPROJ; ++k)
         for (int i = 0; i < args.NDX; ++i)
             #pragma omp parallel for
             for (int j = 0; j < args.NDY; ++j) {
-                compute(lambda, sin_table, cos_table, k, i, j, args,in,out);
+                compute_single(lambda, k, i, j, args,in,out);
                 //cout << format("%1% %2% %3%") %k%i%j <<endl;
             }
 }
 
-/*
-void wrapper(float lambda,float *sin_table,float *cos_table,
-             const Parameter &args,const CTInput &in,CTOutput &out) {
-    for (int np = 0; np < args.NPROJ; ++np) {
-        for (int slice = args.NZ-1; slice>=0; --slice) {
-            //for (int i = 0; i < args.NDX; ++i) {
+void wrapper(float lambda, const Parameter &args,const CTInput &in,CTOutput &out) {
+    for (int np = 0; np < args.NPROJ; np += 30) {
+    //for (int np = 0; np < args.NPROJ; ++np) {
+        //for (int slice = args.NZ-1; slice>=0; --slice) {
+        //for (int ndx = 0; ndx < 1; ++ndx) {
+        for (int ndx = 0; ndx < args.NDX; ++ndx) {
             //#pragma omp parallel for
-            compute(lambda, sin_table, cos_table, np, slice, args,in,out);
+            compute(lambda, np, ndx, args,in,out);
             //cout << format("%1% %2% %3%") %k%i%j <<endl;
+        }
     }
 }
-*/
+
 void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
-    float *cos_table = new float[args.NPROJ];
-    float *sin_table = new float[args.NPROJ];
-
-    for(int i = 0; i < args.NPROJ; i++) {
-        const float alpha = (float)i/args.NPROJ*2*PI;
-        sin_table[i] = sin(alpha);
-        cos_table[i] = cos(alpha);
-    }
-
     max_numb = 0;
 
-    out.allocate_img(args.NX*args.NY*args.NZ);
-    out.allocate_edge(args.NX*args.NY*args.NZ);
+    out.allocate();
 
-    float lambda = 0.01;
+    float lambda = 1;
 
     int64_t global_start = timer_s();
 
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(100.0+iters*2.0);
+        //lambda = 1.0/(100.0+iters*2.0);
 
         cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
@@ -346,7 +166,7 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
         Afg = 0;
 
         int64_t start = timer_s();
-        wrapper(lambda,sin_table,cos_table, args,in,out);
+        wrapper(lambda,args,in,out);
         int64_t end = timer_s();
         
         ave_numb /= args.NPROJ*args.NDX*args.NDY;
@@ -360,9 +180,6 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
     cout << "===========================================" <<endl;
     cout << format("TOTAL time used = %1% seconds") % (global_end-global_start) <<endl;
     cout<< format("actual max raylen = %1%, average raylen = %2%") % max_numb % ave_numb << endl;
-
-    delete [] sin_table;
-    delete [] cos_table;
 }
 
 int main(int argc, char** argv) {
@@ -378,12 +195,260 @@ int main(int argc, char** argv) {
     CTOutput out = CTOutput(args);
 
     in.read_sino(args.RAW_DATA_FILE);
-    in.read_pretracing(args.PRETRACING_FILE);
+    //in.read_pretracing(args.PRETRACING_FILE);
     ct3d(args,in,out);
     out.write_img(args.OUTPUT_DIR);
     out.write_edge(args.OUTPUT_DIR);
 
     return 0;
+}
+
+void gdIMAGE(float lambda, int np, int ndx,
+              int64_t *ind, float *wgt, int *numb,
+              const Parameter &args, const CTInput &in, CTOutput &out) {
+    float *r = new float[args.NDY];
+    float *g = new float[args.NDY];
+    float *Af = new float[args.NDY];
+
+    img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
+    float *q = new float[args.NDY];
+
+    for (int ndy = 0; ndy < args.NDY; ++ndy)
+        g[ndy] = in.sino_data(np,ndx,ndy);
+
+    // Af = A(f)
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        float *__wgt = wgt + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        float accum_Af = 0;
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+            accum_Af += out.img_data(nz,nx,ny)*__wgt[i];
+        }
+        Af[ndy] = accum_Af;
+    }
+
+    // r = g-Af
+    for (int i = 0; i<args.NDY; ++i) {
+        r[i] = g[i]-Af[i];
+        Afg += sqr(r[i]);
+    }
+
+    // d = A*(r)
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        float *__wgt = wgt + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+        for (int i = 0; i<__numb; ++i) {
+            d[ndy*args.MAX_RAYLEN+i] += r[ndy]*__wgt[i];
+        }
+    }
+
+    // d += alpha*(v^2 \nabla f) + e^2 \laplace f
+    for (int ndy = 0; ndy < args.NDY; ++ndy) {
+        for (int i = 0; i<numb[ndy]; ++i) {
+            int64_t idx = ind[ndy*args.MAX_RAYLEN+i],nz,nx,ny;
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            d[ndy*args.MAX_RAYLEN+i] += args.ALPHA*(
+                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  ))
+                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
+                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
+                -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1))
+                +sqr(args.EPSILON)*(
+                    +  out.img_data(nz+1,nx  ,ny  )
+                    +  out.img_data(nz  ,nx+1,ny  )
+                    +  out.img_data(nz  ,nx  ,ny+1)
+                    -6*out.img_data(nz  ,nx  ,ny  )
+                    +  out.img_data(nz-1,nx  ,ny  )
+                    +  out.img_data(nz  ,nx-1,ny  )
+                    +  out.img_data(nz  ,nx  ,ny-1)
+                )
+            );
+        }
+    }
+
+    // q = A(d)
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        float *__wgt = wgt + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        float accum_q = 0;
+        for (int i = 0; i<__numb; ++i) {
+            accum_q += d[ndy*args.MAX_RAYLEN+i]*__wgt[i];
+        }
+        q[ndy] = accum_q;
+    }
+
+    float nV_KepsNablap = 0;
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            nV_KepsNablap += (sqr(out.edge_data(nz,nx,ny))+sqr(args.EPSILON))*(
+                +sqr(d[ndy*args.MAX_RAYLEN+i]-out.img_data(nz-1,nx  ,ny  ))
+                +sqr(d[ndy*args.MAX_RAYLEN+i]-out.img_data(nz  ,nx-1,ny  ))
+                +sqr(d[ndy*args.MAX_RAYLEN+i]-out.img_data(nz  ,nx  ,ny-1))
+            );
+        }
+    }
+
+    
+    float pSkalard = 0, normAp = 0;
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int __numb = numb[ndy];
+        for (int i = 0; i<__numb; ++i) {
+            int idx = ndy*args.MAX_RAYLEN+i;
+            pSkalard += d[idx]*d[idx];
+        }
+        normAp += sqr(q[ndy]);
+    }
+
+    if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4) return;
+
+    float c_1 = pSkalard/(normAp+args.ALPHA*nV_KepsNablap);
+
+    //cout << format("nV_KepsNablap = %1%, pSkalard = %2%, normAp = %3%, c_1 = %4%") % nV_KepsNablap % pSkalard % normAp % c_1 << endl;
+
+    // update f
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            out.img_data(nz,nx,ny) += lambda * c_1 * d[ndy*args.MAX_RAYLEN+i];
+        }
+    }
+
+    delete [] r;
+    delete [] g;
+    delete [] Af;
+    delete [] d;
+    delete [] q;
+}
+
+void gdEDGE(float lambda,
+             int64_t *ind, float *wgt, int *numb,
+             const Parameter &args, const CTInput &in, CTOutput &out) {
+    float *n = new float[args.NDY*args.MAX_RAYLEN];
+    float *d = new float[args.NDY*args.MAX_RAYLEN];
+
+    float nD = 0;
+
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            n[ndy*args.MAX_RAYLEN+i] = 0.25*(
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
+            );
+
+            
+            d[ndy*args.MAX_RAYLEN+i] = -(
+                +args.ALPHA*out.edge_data(nz,nx,ny)*n[ndy*args.MAX_RAYLEN+i]
+                +args.BETA/(4*args.EPSILON)*(out.edge_data(nz,nx,ny)-1)
+                -args.BETA*args.EPSILON*0.25*(
+                    +  out.edge_data(nz+1,nx  ,ny  )
+                    +  out.edge_data(nz  ,nx+1,ny  )
+                    +  out.edge_data(nz  ,nx  ,ny+1)
+                    -6*out.edge_data(nz  ,nx  ,ny  )
+                    +  out.edge_data(nz-1,nx  ,ny  )
+                    +  out.edge_data(nz  ,nx-1,ny  )
+                    +  out.edge_data(nz  ,nx  ,ny-1)
+                )
+            );
+
+            nD += sqr(d[ndy*args.MAX_RAYLEN+i]);
+        }
+    }
+
+    float nNablaD = 0;
+    float tmp = 0;
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            nNablaD += 0.25*(
+                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))
+                +sqr(out.edge_data(nz  ,nx+1,ny  ) - out.edge_data(nz  ,nx-1,ny  ))
+                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))
+            );
+
+            tmp += n[ndy*args.MAX_RAYLEN+i]*sqr(d[ndy*args.MAX_RAYLEN+i]);
+        }
+    }
+
+    if (fabs(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD)<1e-4) return;
+
+    float c = nD/(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD);
+
+    //cout << format("nD = %1%, nNablaD = %2%, c = %3%") % nD % nNablaD % c << endl;
+
+    for (int ndy = 0; ndy<args.NDY; ++ndy) {
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx,nz,nx,ny;
+            idx = __ind[i];
+            nz = idx/(args.NX*args.NY);
+            idx %= args.NX*args.NY;
+            nx = idx/args.NY;
+            ny = idx%args.NY;
+
+            edge_type tmp_v = out.edge_data(nz,nx,ny) + c * d[ndy*args.MAX_RAYLEN+i];
+            if (tmp_v<0) tmp_v = 0;
+            if (tmp_v>1) tmp_v = 1;
+            out.edge_data(nz,nx,ny) = tmp_v;
+        }
+    }
+
+    delete [] n;
+    delete [] d;
 }
 
 float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda,

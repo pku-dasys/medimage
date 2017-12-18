@@ -101,10 +101,10 @@ void taiji(const Parameter &args) {
         fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
     fou.close();
 
-    fou.open(args.PRETRACING_FILE);
-    for (int i = 0; i<args.NZ; ++i)
-        fou<<back_front[i]<<' '<<back_rear[i]<<endl;
-    fou.close();
+    //fou.open(args.PRETRACING_FILE);
+    //for (int i = 0; i<args.NZ; ++i)
+    //    fou<<back_front[i]<<' '<<back_rear[i]<<endl;
+    //fou.close();
 
     delete [] back_front;
     delete [] back_rear;

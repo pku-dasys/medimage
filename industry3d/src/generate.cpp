@@ -90,10 +90,10 @@ void generate_cone_taiji()
 
 int main(int argc, char** argv) {
 
-    //generate_parallel_circle();
-    //generate_parallel_sphere();
-    //generate_parallel_ellipse();
-    //generate_parallel_taiji();
+    generate_parallel_circle();
+    generate_parallel_sphere();
+    generate_parallel_ellipse();
+    generate_parallel_taiji();
     generate_cone_taiji();
     return 0;
 }
