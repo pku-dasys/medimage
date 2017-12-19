@@ -163,8 +163,8 @@ void wrapper_single(float lambda, const Parameter &args,const CTInput &in,CTOutp
 
 void wrapper(float lambda, const Parameter &args,const CTInput &in,CTOutput &out) {
     Af_minus_g = 0;
-    for (int np = 0; np < args.NPROJ; np += 10) {
-    //for (int np = 0; np < args.NPROJ; ++np) {
+    //for (int np = 0; np < args.NPROJ; np += 10) {
+    for (int np = 0; np < args.NPROJ; ++np) {
         //for (int slice = args.NZ-1; slice>=0; --slice) {
         //for (int ndx = 64; ndx < 65; ++ndx) {
         for (int ndx = 0; ndx < args.NDX; ++ndx) {
@@ -181,12 +181,12 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
 
     out.allocate();
 
-    float lambda = 0.05;
+    float lambda = 0.005;
 
     int64_t global_start = timer_s();
 
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(20+iters*2.0);
+        lambda = 1.0/(200+iters*20);
 
         cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
@@ -233,17 +233,14 @@ void gdIMAGE(float lambda, int np, int ndx,
               int64_t *ind, float *wgt, int *numb,
               const Parameter &args, const CTInput &in, CTOutput &out) {
     float *r = new float[args.NDY];
-    float *g = new float[args.NDY];
-    float *Af = new float[args.NDY];
 
     img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
-    float *q = new float[args.NDY];
-    
-    #pragma omp parallel for
-    for (int ndy = 0; ndy < args.NDY; ++ndy)
-        g[ndy] = in.sino_data(np,ndx,ndy);
+    //float *q = new float[args.NDY];
+
+    // A*(Af-g) - alpha div{ ( v^2 + epsilon) (grad f) }
 
     // Af = A(f)
+    // r = g-Af
     #pragma omp parallel for
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
@@ -260,14 +257,9 @@ void gdIMAGE(float lambda, int np, int ndx,
             ny = idx%args.NY;
             accum_Af += out.img_data(nz,nx,ny)*__wgt[i];
         }
-        Af[ndy] = accum_Af;
+        r[ndy] = in.sino_data(np,ndx,ndy) - accum_Af;
     }
 
-    // r = g-Af
-    #pragma omp parallel for
-    for (int i = 0; i<args.NDY; ++i) {
-        r[i] = g[i]-Af[i];
-    }
 
     //cout << "g" << endl;
     //for (int i = 0; i<args.NDY; ++i)
@@ -284,42 +276,37 @@ void gdIMAGE(float lambda, int np, int ndx,
     //    cout << r[i] <<' ';
     //cout << endl;
 
-    // d = A*(r)
-    #pragma omp parallel for 
-    for (int ndy = 0; ndy<args.NDY; ++ndy) {
-        float *__wgt = wgt + ndy*args.MAX_RAYLEN;
-        int __numb = numb[ndy];
-        for (int i = 0; i<__numb; ++i) {
-            d[ndy*args.MAX_RAYLEN+i] = r[ndy]*__wgt[i];
-        }
-    }
-
     // d += alpha*{ (v^2 \nabla f) + e^2 \laplace f }
     //cout << "d "<<endl;
     #pragma omp parallel for 
     for (int ndy = 0; ndy < args.NDY; ++ndy) {
-        for (int i = 0; i<numb[ndy]; ++i) {
-            int64_t idx = ind[ndy*args.MAX_RAYLEN+i],nz,nx,ny;
+        int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
+        float *__wgt = wgt + ndy*args.MAX_RAYLEN;
+        int __numb = numb[ndy];
+        for (int i = 0; i<__numb; ++i) {
+            int64_t idx = __ind[i],nz,nx,ny;
             nz = idx/(args.NX*args.NY);
             idx %= args.NX*args.NY;
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            d[ndy*args.MAX_RAYLEN+i] += args.ALPHA*(
-                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
-                -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  ))
-                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
-                -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
-                +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
-                -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1)))
-                +sqr(args.EPSILON)*(
-                    +  out.img_data(nz+1,nx  ,ny  )
-                    +  out.img_data(nz  ,nx+1,ny  )
-                    +  out.img_data(nz  ,nx  ,ny+1)
-                    -6*out.img_data(nz  ,nx  ,ny  )
-                    +  out.img_data(nz-1,nx  ,ny  )
-                    +  out.img_data(nz  ,nx-1,ny  )
-                    +  out.img_data(nz  ,nx  ,ny-1)
+            d[ndy*args.MAX_RAYLEN+i] = r[ndy]*__wgt[i]
+                +args.ALPHA*(
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  ))
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1))
+                    +sqr(args.EPSILON)*(
+                        +  out.img_data(nz+1,nx  ,ny  )
+                        +  out.img_data(nz  ,nx+1,ny  )
+                        +  out.img_data(nz  ,nx  ,ny+1)
+                        -6*out.img_data(nz  ,nx  ,ny  )
+                        +  out.img_data(nz-1,nx  ,ny  )
+                        +  out.img_data(nz  ,nx-1,ny  )
+                        +  out.img_data(nz  ,nx  ,ny-1)
+                    )
                 );
             //cout << d[ndy*args.MAX_RAYLEN+i] << ' ';
         }
@@ -327,6 +314,7 @@ void gdIMAGE(float lambda, int np, int ndx,
     }
 
     // q = A(d)
+    /*
     #pragma omp parallel for 
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         float *__wgt = wgt + ndy*args.MAX_RAYLEN;
@@ -338,12 +326,14 @@ void gdIMAGE(float lambda, int np, int ndx,
         }
         q[ndy] = accum_q;
     }
+    */
 
     //cout << "q" << endl;
     //for (int i = 0; i<args.NDY; ++i)
     //    cout << q[i] <<' ';
     //cout << endl;
 
+    /*
     float nV_KepsNablap = 0;
     #pragma omp parallel for reduction(+:nV_KepsNablap)
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
@@ -386,6 +376,7 @@ void gdIMAGE(float lambda, int np, int ndx,
     float c_1 = pSkalard/(normAp+args.ALPHA*nV_KepsNablap);
 
     //cout << format("nV_KepsNablap = %1%, pSkalard = %2%, normAp = %3%, c_1 = %4%") % nV_KepsNablap % pSkalard % normAp % c_1 << endl;
+    */
 
     // update f
     #pragma omp parallel for
@@ -401,29 +392,30 @@ void gdIMAGE(float lambda, int np, int ndx,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            img_type tmp_f = out.img_data(nz,nx,ny) + lambda * c_1 * d[ndy*args.MAX_RAYLEN+i];
+            //img_type tmp_f = out.img_data(nz,nx,ny) + lambda * c_1 * d[ndy*args.MAX_RAYLEN+i];
+            img_type tmp_f = out.img_data(nz,nx,ny) + lambda * d[ndy*args.MAX_RAYLEN+i];
 
-            if (fabs(tmp_f)>1e2) {
-                cout << format("c_1= %1%, d = %2%, out.img=%3%")%c_1%d[ndy*args.MAX_RAYLEN+i]%out.img_data(nz,nx,ny) <<endl;
-                exit(1);
-            }
+            //if (fabs(tmp_f)>1e2) {
+            //    cout << format("c_1= %1%, d = %2%, out.img=%3%")%c_1%d[ndy*args.MAX_RAYLEN+i]%out.img_data(nz,nx,ny) <<endl;
+            //    exit(1);
+            //}
 
             out.img_data(nz,nx,ny) = tmp_f;
         }
     }
 
     delete [] r;
-    delete [] g;
-    delete [] Af;
     delete [] d;
-    delete [] q;
+    //delete [] q;
 }
 
 void gdEDGE(float lambda,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out) {
-    float *n = new float[args.NDY*args.MAX_RAYLEN];
+    //float *n = new float[args.NDY*args.MAX_RAYLEN];
     float *d = new float[args.NDY*args.MAX_RAYLEN];
+
+    // alpha * |grad f|^2 v  + beta/(4 epsilon) * (v-1)  -  beta * epsilon( laplace v)
 
     #pragma omp parallel for
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
@@ -438,14 +430,19 @@ void gdEDGE(float lambda,
             nx = idx/args.NY;
             ny = idx%args.NY;
             //||grad f||^2
-            n[ndy*args.MAX_RAYLEN+i] = (
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
-            );
+            //n[ndy*args.MAX_RAYLEN+i] = (
+            //    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
+            //    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
+            //    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
+            //);
 
             d[ndy*args.MAX_RAYLEN+i] = -(
-                +args.ALPHA*out.edge_data(nz,nx,ny)*n[ndy*args.MAX_RAYLEN+i]
+                //+args.ALPHA*out.edge_data(nz,nx,ny)*n[ndy*args.MAX_RAYLEN+i]
+                +args.ALPHA*out.edge_data(nz,nx,ny)*(
+                    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
+                    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
+                    +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
+                )
                 +args.BETA/(4*args.EPSILON)*(out.edge_data(nz,nx,ny)-1)
                 -args.BETA*args.EPSILON*(
                     +  out.edge_data(nz+1,nx  ,ny  )
@@ -460,7 +457,8 @@ void gdEDGE(float lambda,
 
         }
     }
-
+    
+    /*
     float nNablaD = 0;
     float tmp = 0;
     float nD = 0;
@@ -508,6 +506,8 @@ void gdEDGE(float lambda,
 
     //cout << format("nD = %1%, nNablaD = %2%, c = %3%") % nD % nNablaD % c << endl;
 
+    */
+
     #pragma omp parallel for
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
@@ -521,20 +521,21 @@ void gdEDGE(float lambda,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.1 * c * d[ndy*args.MAX_RAYLEN+i];
+            //edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.1 * c * d[ndy*args.MAX_RAYLEN+i];
+            edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.005 * d[ndy*args.MAX_RAYLEN+i];
             if (tmp_v<0) tmp_v = 0;
             if (tmp_v>1) tmp_v = 1;
 
-            if (isnan(tmp_v)) {
-                cout << format("c= %1%, d = %2%, out.edge=%3%")%c%d[ndy*args.MAX_RAYLEN+i]%out.edge_data(nz,nx,ny) <<endl;
-                exit(1);
-            }
+            //if (isnan(tmp_v)) {
+            //    cout << format("c= %1%, d = %2%, out.edge=%3%")%c%d[ndy*args.MAX_RAYLEN+i]%out.edge_data(nz,nx,ny) <<endl;
+            //    exit(1);
+            //}
 
             out.edge_data(nz,nx,ny) = tmp_v;
         }
     }
 
-    delete [] n;
+    //delete [] n;
     delete [] d;
 }
 
