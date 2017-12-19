@@ -113,13 +113,18 @@ edge_type& CTOutput::edge_data(int z,int x,int y) {
     return edge[(z+1)*(args.NX+2)*(args.NY+2)+(x+1)*(args.NY+2)+(y+1)];
 }
 
-void CTOutput::write_img(const string &output_dir) {
+void CTOutput::write_img(const string &output_dir,int iteration) {
     cout<< "Start writing images ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
-    boost::filesystem::create_directory(dir);
+        boost::filesystem::create_directory(dir);
     for (int z = 0; z<args.NZ; ++z) {
-        string slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
+        string slice_output;
+        if (iteration==-1)
+            slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
+        else
+            slice_output = output_dir+"/"+boost::lexical_cast<string>(iteration)+"_i_"+boost::lexical_cast<string>(z);
+        if (iteration!=-1 && z!=args.NZ/2) continue;
         ofstream fou(slice_output);
         fou.precision(6);
         for (int x = 0; x<args.NX; ++x) {
@@ -133,13 +138,18 @@ void CTOutput::write_img(const string &output_dir) {
     cout<< "done." <<endl;
 }
 
-void CTOutput::write_edge(const string &output_dir) {
+void CTOutput::write_edge(const string &output_dir,int iteration) {
     cout<< "Start writing edges ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
-    boost::filesystem::create_directory(dir);
+        boost::filesystem::create_directory(dir);
     for (int z = 0; z<args.NZ; ++z) {
-        string slice_output = output_dir+"/e_"+boost::lexical_cast<string>(z);
+        string slice_output;
+        if (iteration==-1)
+            slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
+        else
+            slice_output = output_dir+"/"+boost::lexical_cast<string>(iteration)+"_e_"+boost::lexical_cast<string>(z);
+        if (iteration!=-1 && z!=args.NZ/2) continue;
         ofstream fou(slice_output);
         fou.precision(6);
         for (int x = 0; x<args.NX; ++x) {

@@ -186,7 +186,7 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
     int64_t global_start = timer_s();
 
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(200+iters*20);
+        lambda = 1.0/(200+iters*100);
 
         cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
 
@@ -199,6 +199,9 @@ void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
         ave_numb /= args.NPROJ*args.NDX*args.NDY;
         cout << format("time used = %1% seconds") % (end-start) <<endl;
         cout << "-------------------------------------------" <<endl;
+
+        out.write_img(args.OUTPUT_DIR, iters);
+        out.write_edge(args.OUTPUT_DIR, iters);
     }
 
     int64_t global_end = timer_s();
