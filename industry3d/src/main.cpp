@@ -294,7 +294,7 @@ void gdIMAGE(float lambda, int np, int ndx,
         }
     }
 
-    // d += alpha*(v^2 \nabla f) + e^2 \laplace f
+    // d += alpha*{ (v^2 \nabla f) + e^2 \laplace f }
     //cout << "d "<<endl;
     #pragma omp parallel for 
     for (int ndy = 0; ndy < args.NDY; ++ndy) {
