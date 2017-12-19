@@ -146,7 +146,7 @@ void CTOutput::write_edge(const string &output_dir,int iteration) {
     for (int z = 0; z<args.NZ; ++z) {
         string slice_output;
         if (iteration==-1)
-            slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
+            slice_output = output_dir+"/e_"+boost::lexical_cast<string>(z);
         else
             slice_output = output_dir+"/"+boost::lexical_cast<string>(iteration)+"_e_"+boost::lexical_cast<string>(z);
         if (iteration!=-1 && z!=args.NZ/2) continue;
