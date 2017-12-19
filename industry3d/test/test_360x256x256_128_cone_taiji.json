@@ -19,7 +19,7 @@
 "BEAM" : "Cone",
 
 "THREAD_NUMB" : 16,
-"ITERATIONS" : 10,
+"ITERATIONS" : 100,
 
 "ALPHA" : 10,
 "BETA" : 0.001,
