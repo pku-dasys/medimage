@@ -52,9 +52,9 @@ void readdata()
 	float imini = inf(), imaxi = -inf(), emini = inf(), emaxi = -inf();
 	for(int i = 0; i < z; i++)
 	{
-		snprintf(buf, 1024, "%s/i_%d", dir, i);
+		snprintf(buf, 1024, "%si_%d", dir, i);
 		ifstream fimg(buf, ios::in);
-		snprintf(buf, 1024, "%s/e_%d", dir, i);
+		snprintf(buf, 1024, "%se_%d", dir, i);
 		ifstream fedg(buf, ios::in);
 
 		for(int j = y - 1; j >= 0; j--)
@@ -102,19 +102,30 @@ int main(int argc, char **argv)
 {
 	if(argc < 5)
 	{
-		printf("usage: viewer dir x y z\n");
+		printf("usage: viewer dir x y z [z0]\n");
 		exit(0);
 	}
 	dir = argv[1];
 	x = atoi(argv[2]);
 	y = atoi(argv[3]);
 	z = atoi(argv[4]);
-	argv[4] = argv[0];
-	argc -= 4;
-	curz = 0;
+	if(argc > 5)
+	{
+		curz = atoi(argv[5]);
+		argv[5] = argv[0];
+		argc -= 5;
+		argv += 5;
+	}
+	else
+	{
+		curz = 0;
+		argv[4] = argv[0];
+		argc -= 4;
+		argv += 4;
+	}
 	img = new float[x*y*z*2];
 	readdata();
-	glutInit(&argc, argv+4);
+	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
 	glutInitWindowSize(x*2, y);
 	glutInitWindowPosition(200, 200);
