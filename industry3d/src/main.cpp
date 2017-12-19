@@ -163,8 +163,8 @@ void wrapper_single(float lambda, const Parameter &args,const CTInput &in,CTOutp
 
 void wrapper(float lambda, const Parameter &args,const CTInput &in,CTOutput &out) {
     Af_minus_g = 0;
-    //for (int np = 0; np < args.NPROJ; np += 30) {
-    for (int np = 0; np < args.NPROJ; ++np) {
+    for (int np = 0; np < args.NPROJ; np += 10) {
+    //for (int np = 0; np < args.NPROJ; ++np) {
         //for (int slice = args.NZ-1; slice>=0; --slice) {
         //for (int ndx = 64; ndx < 65; ++ndx) {
         for (int ndx = 0; ndx < args.NDX; ++ndx) {
@@ -311,7 +311,7 @@ void gdIMAGE(float lambda, int np, int ndx,
                 +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
                 -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
                 +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
-                -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1))
+                -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1)))
                 +sqr(args.EPSILON)*(
                     +  out.img_data(nz+1,nx  ,ny  )
                     +  out.img_data(nz  ,nx+1,ny  )
@@ -320,8 +320,7 @@ void gdIMAGE(float lambda, int np, int ndx,
                     +  out.img_data(nz-1,nx  ,ny  )
                     +  out.img_data(nz  ,nx-1,ny  )
                     +  out.img_data(nz  ,nx  ,ny-1)
-                )
-            );
+                );
             //cout << d[ndy*args.MAX_RAYLEN+i] << ' ';
         }
         //cout << endl;
@@ -438,8 +437,8 @@ void gdEDGE(float lambda,
             idx %= args.NX*args.NY;
             nx = idx/args.NY;
             ny = idx%args.NY;
-
-            n[ndy*args.MAX_RAYLEN+i] = 0.25*(
+            //||grad f||^2
+            n[ndy*args.MAX_RAYLEN+i] = (
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
@@ -448,7 +447,7 @@ void gdEDGE(float lambda,
             d[ndy*args.MAX_RAYLEN+i] = -(
                 +args.ALPHA*out.edge_data(nz,nx,ny)*n[ndy*args.MAX_RAYLEN+i]
                 +args.BETA/(4*args.EPSILON)*(out.edge_data(nz,nx,ny)-1)
-                -args.BETA*args.EPSILON*0.25*(
+                -args.BETA*args.EPSILON*(
                     +  out.edge_data(nz+1,nx  ,ny  )
                     +  out.edge_data(nz  ,nx+1,ny  )
                     +  out.edge_data(nz  ,nx  ,ny+1)
