@@ -97,9 +97,12 @@ void Parameter::print_options() {
 
 void CTOutput::allocate() {
     int64_t size = (args.NX+2)*(args.NY+2)*(args.NZ+2);
-    img = new img_type[size]{};
+    img = new img_type[size];
     edge = new edge_type[size];
-    for (int64_t i = 0; i<size; ++i) edge[i] = 1.0;
+    for (int64_t i = 0; i<size; ++i) {
+        img[i] = 0.;
+        edge[i] = 1.0;
+    }
 }
 
 img_type& CTOutput::img_data(int z,int x,int y) {
