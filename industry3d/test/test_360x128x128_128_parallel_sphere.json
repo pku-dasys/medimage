@@ -24,5 +24,9 @@
 "BETA" : 0.05,
 "EPSILON" : 0.001,
 
+"LAMBDA_IMG" : 0.01,
+"LAMBDA_EDGE" : 0.001,
+"AMPLIFIER" : 5,
+
 "OUTPUT_DIR" : "test_360x128x128_128_parallel_sphere"
 }

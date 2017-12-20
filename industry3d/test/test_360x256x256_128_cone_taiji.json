@@ -19,15 +19,15 @@
 "BEAM" : "Cone",
 
 "THREAD_NUMB" : 16,
-"ITERATIONS" : 100,
+"ITERATIONS" : 20,
 
 "ALPHA" : 10,
 "BETA" : 0.001,
 "EPSILON" : 0.005,
 
-"LAMBDA_IMG" : 0.01,
-"LAMBDA_EDGE" : 0.001,
-"AMPLIFIER" : 5,
+"LAMBDA_IMG" : 0.05,
+"LAMBDA_EDGE" : 0.01,
+"AMPLIFIER" : 2,
 
 "OUTPUT_DIR" : "test_360x256x256_128_cone_taiji"
 }

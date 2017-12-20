@@ -1,5 +1,6 @@
 {
 "RAW_DATA_FILE" : "test_360x128x128_128_parallel_circle.dr",
+"PRETRACING_FILE" : "test_360x128x128_128_parallel_circle.txt",
 
 "NX" : 128,
 "NY" : 128,
@@ -18,11 +19,15 @@
 "BEAM" : "Parallel",
 
 "THREAD_NUMB" : 16,
-"ITERATIONS" : 1,
+"ITERATIONS" : 20,
 
 "ALPHA" : 10,
 "BETA" : 0.05,
 "EPSILON" : 0.001,
+
+"LAMBDA_IMG" : 0.05,
+"LAMBDA_EDGE" : 0.05,
+"AMPLIFIER" : 2,
 
 "OUTPUT_DIR" : "test_360x128x128_128_parallel_circle"
 }

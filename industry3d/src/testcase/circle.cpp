@@ -53,7 +53,21 @@ void parallel_circle(const Parameter &args) {
             for (int j = 0; j<args.NY; ++j) {
                 float dst = sqrt(sqr(i-args.HALFSIZE)+sqr(j-args.HALFSIZE));
                 if (equals_draw(dst,24) || equals_draw(dst,48) || equals_draw(dst,36) || equals_draw(dst,12) || equals_draw(dst,60)) {
-                    img[k*args.NX*args.NY+i*args.NY+j] = 0.2;
+                    if (equals_draw(dst,24)) {
+                        img[k*args.NX*args.NY+i*args.NY+j] = 1;
+                    }
+                    else if (equals_draw(dst,48)) {
+                        img[k*args.NX*args.NY+i*args.NY+j] = 2;
+                    }
+                    else if (equals_draw(dst,36)) {
+                        img[k*args.NX*args.NY+i*args.NY+j] = 5;
+                    }
+                    else if (equals_draw(dst,12)) {
+                        img[k*args.NX*args.NY+i*args.NY+j] = 7;
+                    }
+                    else if (equals_draw(dst,60)) {
+                        img[k*args.NX*args.NY+i*args.NY+j] = 9;
+                    }
                 }
                 else img[k*args.NX*args.NY+i*args.NY+j] = 0.0;
             }
