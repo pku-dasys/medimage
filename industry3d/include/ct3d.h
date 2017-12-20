@@ -32,6 +32,10 @@ public:
     float BETA;
     float EPSILON;
 
+    float LAMBDA_IMG;
+    float LAMBDA_EDGE;
+    int AMPLIFIER;
+
     int THREAD_NUMB;
 
     float vx,vy,vz;

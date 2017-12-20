@@ -48,13 +48,12 @@ float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda,
 void minEDGE(int64_t *line, float *weight, int numb, float lambda,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void gdIMAGE(float lambda, int np, int ndx,
-              int64_t *ind, float *wgt, int *numb,
-              const Parameter &args, const CTInput &in, CTOutput &out);
-
-void gdEDGE(float lambda,
+void gdIMAGE(int np, int ndx,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out);
+
+void gdEDGE(int64_t *ind, float *wgt, int *numb,
+            const Parameter &args, const CTInput &in, CTOutput &out);
 
 void get_tracing(int alpha,int detectorX,int detectorY,
                  int64_t *ind,float *wgt,int &numb,
@@ -99,7 +98,7 @@ void compute_single(float lambda, int alpha, int detectorX, int detectorY,
 
 float Af_minus_g;
 
-void compute(float lambda, int np, int ndx,
+void compute(int np, int ndx,
              const Parameter &args, const CTInput &in, CTOutput &out) {
     int64_t *ind = new int64_t[args.NDY*args.MAX_RAYLEN];
     float *wgt = new float[args.NDY*args.MAX_RAYLEN];
@@ -113,11 +112,11 @@ void compute(float lambda, int np, int ndx,
         ave_numb += numb[ndy];
     }
 
-    gdIMAGE(lambda, np, ndx,
+    gdIMAGE(np, ndx,
             ind, wgt, numb,
             args, in, out);
 
-    gdEDGE(lambda, ind, wgt, numb,
+    gdEDGE(ind, wgt, numb,
            args, in, out);
 
     float object_fn = 0;
@@ -136,10 +135,6 @@ void compute(float lambda, int np, int ndx,
             nx = idx/args.NY;
             ny = idx%args.NY;
             accum_Af += out.img_data(nz,nx,ny)*__wgt[i];
-            if (isnan(accum_Af)) {
-                cout << format("np = %1%, ndx = %2%, ndy = %3%, i = %4%")%np%ndx%ndy%i << endl;
-                exit(1);
-            }
         }
         object_fn += sqr(accum_Af-in.sino_data(np,ndx,ndy));
     }
@@ -161,7 +156,7 @@ void wrapper_single(float lambda, const Parameter &args,const CTInput &in,CTOutp
             }
 }
 
-void wrapper(float lambda, const Parameter &args,const CTInput &in,CTOutput &out) {
+void wrapper(const Parameter &args,const CTInput &in,CTOutput &out) {
     Af_minus_g = 0;
     //for (int np = 0; np < args.NPROJ; np += 10) {
     for (int np = 0; np < args.NPROJ; ++np) {
@@ -169,31 +164,33 @@ void wrapper(float lambda, const Parameter &args,const CTInput &in,CTOutput &out
         //for (int ndx = 64; ndx < 65; ++ndx) {
         for (int ndx = 0; ndx < args.NDX; ++ndx) {
             //#pragma omp parallel for
-            compute(lambda, np, ndx, args,in,out);
+            compute(np, ndx, args,in,out);
             //cout << format("%1% %2% %3%") %k%i%j <<endl;
         }
     }
     cout << format("||Af-g||^2 = %1%") % Af_minus_g <<endl;
 }
 
-void ct3d(const Parameter &args,const CTInput &in,CTOutput &out) {
+void ct3d(Parameter &args,const CTInput &in,CTOutput &out) {
     max_numb = 0;
 
     out.allocate();
 
-    float lambda = 0.01;
-
     int64_t global_start = timer_s();
 
-    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
-        lambda = 1.0/(100+iters*1);
+    float init_lambda_img = 1/args.LAMBDA_IMG;
+    float init_lambda_edge = 1/args.LAMBDA_EDGE;
 
-        cout << format("iter = %1%, lambda = %2%") % iters % lambda <<endl;
+    for (int iters = 0; iters < args.ITERATIONS; ++iters) {
+        args.LAMBDA_IMG = 1.0/(init_lambda_img+(float)iters/args.ITERATIONS*(args.AMPLIFIER-1)*init_lambda_img);
+        args.LAMBDA_EDGE = 1.0/(init_lambda_edge+(float)iters/args.ITERATIONS*(args.AMPLIFIER-1)*init_lambda_edge);
+
+        cout << format("iter = %1%, lambda_img = %2%, lambda_edge = %3%") % iters % args.LAMBDA_IMG % args.LAMBDA_EDGE <<endl;
 
         ave_numb = 0;
 
         int64_t start = timer_s();
-        wrapper(lambda,args,in,out);
+        wrapper(args,in,out);
         int64_t end = timer_s();
         
         ave_numb /= args.NPROJ*args.NDX*args.NDY;
@@ -232,9 +229,9 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void gdIMAGE(float lambda, int np, int ndx,
-              int64_t *ind, float *wgt, int *numb,
-              const Parameter &args, const CTInput &in, CTOutput &out) {
+void gdIMAGE(int np, int ndx,
+             int64_t *ind, float *wgt, int *numb,
+             const Parameter &args, const CTInput &in, CTOutput &out) {
     float *r = new float[args.NDY];
     img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
 
@@ -334,7 +331,7 @@ void gdIMAGE(float lambda, int np, int ndx,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            img_type tmp_f = out.img_data(nz,nx,ny) + lambda * c_1 * d[k];
+            img_type tmp_f = out.img_data(nz,nx,ny) + args.LAMBDA_IMG * c_1 * d[k];
             //img_type tmp_f = out.img_data(nz,nx,ny) + lambda * d[k];
 
             //if (fabs(tmp_f)>1e2) {
@@ -350,9 +347,8 @@ void gdIMAGE(float lambda, int np, int ndx,
     delete [] d;
 }
 
-void gdEDGE(float lambda,
-             int64_t *ind, float *wgt, int *numb,
-             const Parameter &args, const CTInput &in, CTOutput &out) {
+void gdEDGE(int64_t *ind, float *wgt, int *numb,
+            const Parameter &args, const CTInput &in, CTOutput &out) {
     float *d = new float[args.NDY*args.MAX_RAYLEN];
 
     // alpha * |grad f|^2 v^2  + beta/(4 epsilon) * (v-1)  -  beta * epsilon( laplace v)
@@ -432,7 +428,7 @@ void gdEDGE(float lambda,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.1 * c * d[k];
+            edge_type tmp_v = out.edge_data(nz,nx,ny) + args.LAMBDA_EDGE * c * d[k];
             //edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.005 * d[k];
             if (tmp_v<0) tmp_v = 0;
             if (tmp_v>1) tmp_v = 1;

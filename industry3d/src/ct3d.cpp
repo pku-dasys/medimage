@@ -49,6 +49,10 @@ void Parameter::parse_config(int argc, char** argv) {
         BETA = root.get<float>("BETA");
         EPSILON = root.get<float>("EPSILON");
 
+        LAMBDA_IMG = root.get<float>("LAMBDA_IMG");
+        LAMBDA_EDGE = root.get<float>("LAMBDA_EDGE");
+        AMPLIFIER = root.get<int>("AMPLIFIER");
+
         NDX = root.get<int>("NDX");
         NDY = root.get<int>("NDY");
         NPROJ = root.get<int>("NPROJ");
