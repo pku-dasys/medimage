@@ -67,7 +67,7 @@ void readdata()
 		snprintf(buf, 1024, "%se_%d", dir, i);
 		ifstream fedg(buf, ios::in);
 
-		for(int j = x - 1; j >= 0; j--)
+		for(int j = 0; j < x; j++)
 		{
 			for(int k = 0; k < y; k++)
 			{
@@ -93,7 +93,7 @@ void readdata()
 	}
 	for(int i = 0; i < z; i++)
 	{
-		for(int j = x - 1; j >= 0; j--)
+		for(int j = 0; j < x; j--)
 		{
 			for(int k = 0; k < y; k++)
 			{
