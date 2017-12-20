@@ -48,25 +48,23 @@ float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda,
 void minEDGE(int64_t *line, float *weight, int numb, float lambda,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void gdIMAGE(int np, int ndx,
+void gdIMAGE(int np, int ndx, float sin_tilt,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void gdEDGE(int64_t *ind, float *wgt, int *numb,
+void gdEDGE(float sin_tilt,
+            int64_t *ind, float *wgt, int *numb,
             const Parameter &args, const CTInput &in, CTOutput &out);
 
 void get_tracing(int alpha,int detectorX,int detectorY,
-                 int64_t *ind,float *wgt,int &numb,
+                 int64_t *ind,float *wgt,int &numb, float &sin_tilt,
                  const Parameter &args) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
-    if (args.BEAM=="Parallel")
-        parallel(args,alpha,detectorX,detectorY,
-                 srcX,srcY,srcZ,dstX,dstY,dstZ);
-    else if (args.BEAM=="Cone")
-        cone(args,alpha,detectorX,detectorY,
-             srcX,srcY,srcZ,dstX,dstY,dstZ);
+    getray(args,alpha,detectorX,detectorY,
+           srcX,srcY,srcZ,dstX,dstY,dstZ,
+           sin_tilt);
 
     forward_proj(args,
                  srcX, srcY, srcZ,
@@ -80,9 +78,10 @@ void compute_single(float lambda, int alpha, int detectorX, int detectorY,
     int64_t *ind = new int64_t[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
     int numb;
+    float sin_tilt;
 
     get_tracing(alpha, detectorX, detectorY,
-                ind, wgt, numb, args);
+                ind, wgt, numb, sin_tilt, args);
 
     if (max_numb<numb) max_numb = numb;
     ave_numb += numb;
@@ -103,20 +102,22 @@ void compute(int np, int ndx,
     int64_t *ind = new int64_t[args.NDY*args.MAX_RAYLEN];
     float *wgt = new float[args.NDY*args.MAX_RAYLEN];
     int *numb = new int[args.NDY];
+    float sin_tilt;
 
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         get_tracing(np, ndx, ndy,
-                    ind+ndy*args.MAX_RAYLEN, wgt+ndy*args.MAX_RAYLEN, numb[ndy],
+                    ind+ndy*args.MAX_RAYLEN, wgt+ndy*args.MAX_RAYLEN, numb[ndy], sin_tilt,
                     args);
         if (max_numb<numb[ndy]) max_numb = numb[ndy];
         ave_numb += numb[ndy];
     }
 
-    gdIMAGE(np, ndx,
+    gdIMAGE(np, ndx, sin_tilt,
             ind, wgt, numb,
             args, in, out);
 
-    gdEDGE(ind, wgt, numb,
+    gdEDGE(sin_tilt,
+           ind, wgt, numb,
            args, in, out);
 
     float object_fn = 0;
@@ -229,11 +230,14 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void gdIMAGE(int np, int ndx,
+void gdIMAGE(int np, int ndx, float sin_tilt,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out) {
     float *r = new float[args.NDY];
+    float *w = new float[args.NDY];
     img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
+    
+    float cos_tilt = sqrt(1-sqr(sin_tilt));
 
     // d = gradient = A*(g-Af) + alpha div{ ( v^2 + epsilon) (grad f) } (need confirm)
     // stepsize = <d,d> / (|Ad|^2 + alpha |(v^2+eps^2) grad d|^2 )
@@ -244,6 +248,7 @@ void gdIMAGE(int np, int ndx,
         int __numb = numb[ndy];
 
         float accum_Af = 0;
+        float accum_wgt = 0;
         for (int i = 0; i<__numb; ++i) {
             int64_t idx,nz,nx,ny;
             idx = __ind[i];
@@ -252,8 +257,10 @@ void gdIMAGE(int np, int ndx,
             nx = idx/args.NY;
             ny = idx%args.NY;
             accum_Af += out.img_data(nz,nx,ny)*__wgt[i];
+            accum_wgt += __wgt[i];
         }
         r[ndy] = in.sino_data(np,ndx,ndy) - accum_Af;
+        w[ndy] = accum_wgt;
     }
 
     float nV_KepsNablap = 0;
@@ -277,22 +284,22 @@ void gdIMAGE(int np, int ndx,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            d[k] = r[ndy]*__wgt[i]
+            d[k] = r[ndy]*__wgt[i]/w[ndy]
                 +args.ALPHA*(
-                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
-                    -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  ))
                     +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
                     -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
-                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
-                    -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1))
+                    +(+sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
+                      -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1)))*sin_tilt
+                    +(+sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                      -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  )))*cos_tilt
                     +sqr(args.EPSILON)*(
-                        +  out.img_data(nz+1,nx  ,ny  )
                         +  out.img_data(nz  ,nx+1,ny  )
-                        +  out.img_data(nz  ,nx  ,ny+1)
-                        -6*out.img_data(nz  ,nx  ,ny  )
-                        +  out.img_data(nz-1,nx  ,ny  )
                         +  out.img_data(nz  ,nx-1,ny  )
-                        +  out.img_data(nz  ,nx  ,ny-1)
+                        -2*out.img_data(nz  ,nx  ,ny  )
+                        +(+(out.img_data(nz+1,nx  ,ny  )-out.img_data(nz  ,nx  ,ny  ))
+                          +(out.img_data(nz-1,nx  ,ny  )-out.img_data(nz  ,nx  ,ny  )))*sin_tilt
+                        +(+(out.img_data(nz  ,nx  ,ny+1)-out.img_data(nz  ,nx  ,ny  ))
+                          +(out.img_data(nz  ,nx  ,ny-1)-out.img_data(nz  ,nx  ,ny  )))*cos_tilt
                     )
                 );
 
@@ -300,9 +307,9 @@ void gdIMAGE(int np, int ndx,
             accum_q += d[k]*__wgt[i];
 
             accum_nV_KepsNablap += (sqr(out.edge_data(nz,nx,ny))+sqr(args.EPSILON))*(
-                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))
+                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))*sin_tilt
                 +sqr(d[k]-out.img_data(nz  ,nx-1,ny  ))
-                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))
+                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))*cos_tilt
             );
         }
         nV_KepsNablap += accum_nV_KepsNablap;
@@ -310,7 +317,11 @@ void gdIMAGE(int np, int ndx,
         normAp += sqr(accum_q);
     }
 
-    if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4) return;
+    if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4) {
+        delete [] r;
+        delete [] d;
+        return;
+    }
 
     float c_1 = pSkalard/(normAp+args.ALPHA*nV_KepsNablap);
 
@@ -339,6 +350,9 @@ void gdIMAGE(int np, int ndx,
             //    exit(1);
             //}
 
+            if (tmp_f<args.LOWER_X) tmp_f = args.LOWER_X;
+            if (tmp_f>args.UPPER_X) tmp_f = args.UPPER_X;
+
             out.img_data(nz,nx,ny) = tmp_f;
         }
     }
@@ -347,10 +361,12 @@ void gdIMAGE(int np, int ndx,
     delete [] d;
 }
 
-void gdEDGE(int64_t *ind, float *wgt, int *numb,
+void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
             const Parameter &args, const CTInput &in, CTOutput &out) {
     float *d = new float[args.NDY*args.MAX_RAYLEN];
 
+    float cos_tilt = sqrt(1-sqr(sin_tilt));
+    
     // alpha * |grad f|^2 v^2  + beta/(4 epsilon) * (v-1)  -  beta * epsilon( laplace v)
     // <d,d> / (alpha |grad f|^2 d^2 + beta/(4 eps) * d^2 - beta * eps * (lap d))
     float nNablaD = 0;
@@ -374,29 +390,29 @@ void gdEDGE(int64_t *ind, float *wgt, int *numb,
             ny = idx%args.NY;
 
             float n = (
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))*sin_tilt
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))*cos_tilt
             );
 
             d[k] = -(
                 +args.ALPHA*out.edge_data(nz,nx,ny)*n
                 +args.BETA/(4*args.EPSILON)*(out.edge_data(nz,nx,ny)-1)
                 -args.BETA*args.EPSILON*(
-                    +  out.edge_data(nz+1,nx  ,ny  )
                     +  out.edge_data(nz  ,nx+1,ny  )
-                    +  out.edge_data(nz  ,nx  ,ny+1)
-                    -6*out.edge_data(nz  ,nx  ,ny  )
-                    +  out.edge_data(nz-1,nx  ,ny  )
                     +  out.edge_data(nz  ,nx-1,ny  )
-                    +  out.edge_data(nz  ,nx  ,ny-1)
+                    -2*out.edge_data(nz  ,nx  ,ny  )
+                    +(+(out.edge_data(nz+1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  ))
+                      +(out.edge_data(nz-1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  )))*sin_tilt
+                    +(+(out.edge_data(nz  ,nx  ,ny+1)-out.edge_data(nz  ,nx  ,ny  ))
+                      +(out.edge_data(nz  ,nx  ,ny-1)-out.edge_data(nz  ,nx  ,ny  )))*cos_tilt
                 )
             );
 
             accum_nNablaD += (
-                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))
+                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))*sin_tilt
                 +sqr(out.edge_data(nz  ,nx+1,ny  ) - out.edge_data(nz  ,nx-1,ny  ))
-                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))
+                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))*cos_tilt
             );
 
             accum_tmp += n*sqr(d[k]);

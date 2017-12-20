@@ -36,6 +36,9 @@ public:
     float LAMBDA_EDGE;
     int AMPLIFIER;
 
+    float LOWER_X;
+    float UPPER_X;
+
     int THREAD_NUMB;
 
     float vx,vy,vz;

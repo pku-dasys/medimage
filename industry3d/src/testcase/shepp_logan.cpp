@@ -86,16 +86,16 @@ const float theta[] = {
     0
 };
 const float gray[] = {
-    4,
-    -2.5,
-    -1.05,
-    -1.05,
-    1.1,
-    1.1,
-    1.1,
-    1.1,
-    1.1,
-    1.1
+    8,
+    -5,
+    -2.1,
+    -2.1,
+    2.2,
+    2.2,
+    2.2,
+    2.2,
+    2.2,
+    2.2
 };
 
 void shepp_logan(const Parameter &args) {

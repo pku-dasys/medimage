@@ -18,7 +18,7 @@
 
 "BEAM" : "Cone",
 
-"THREAD_NUMB" : 8,
+"THREAD_NUMB" : 16,
 "ITERATIONS" : 10,
 
 "ALPHA" : 10,
@@ -28,6 +28,9 @@
 "LAMBDA_IMG" : 0.01,
 "LAMBDA_EDGE" : 0.001,
 "AMPLIFIER" : 5,
+
+"LOWER_X" : 0,
+"UPPER_X" : 10.2,
 
 "OUTPUT_DIR" : "test_360x256x256_128_cone_shepp_logan"
 }

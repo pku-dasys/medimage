@@ -53,6 +53,9 @@ void Parameter::parse_config(int argc, char** argv) {
         LAMBDA_EDGE = root.get<float>("LAMBDA_EDGE");
         AMPLIFIER = root.get<int>("AMPLIFIER");
 
+        LOWER_X = root.get<float>("LOWER_X");
+        UPPER_X = root.get<float>("UPPER_X");
+
         NDX = root.get<int>("NDX");
         NDY = root.get<int>("NDY");
         NPROJ = root.get<int>("NPROJ");

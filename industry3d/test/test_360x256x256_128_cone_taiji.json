@@ -29,5 +29,8 @@
 "LAMBDA_EDGE" : 0.01,
 "AMPLIFIER" : 2,
 
+"LOWER_X" : 0,
+"UPPER_X" : 10,
+
 "OUTPUT_DIR" : "test_360x256x256_128_cone_taiji"
 }
