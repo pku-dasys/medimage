@@ -7,10 +7,20 @@ const char* dir;
 int x,y,z;
 volatile int curz;
 float *img;
+/*
+x
+^
+|----------------
+|       |       |
+|       |       |
+| image | edge  |
+|       |       |
+------------------>y
+*/
 void mydisp()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glDrawPixels(x*2, y, GL_LUMINANCE, GL_FLOAT, img+curz*x*y*2);
+	glDrawPixels(y*2, x, GL_LUMINANCE, GL_FLOAT, img+curz*x*y*2);
 	glFlush();
 }
 void keyhandler(int ch, int x, int y)
@@ -57,20 +67,20 @@ void readdata()
 		snprintf(buf, 1024, "%se_%d", dir, i);
 		ifstream fedg(buf, ios::in);
 
-		for(int j = y - 1; j >= 0; j--)
+		for(int j = x - 1; j >= 0; j--)
 		{
-			for(int k = 0; k < x; k++)
+			for(int k = 0; k < y; k++)
 			{
-				const int idx = i*x*y*2 + j*x*2 + k;
+				const int idx = i*x*y*2 + j*y*2 + k;
 				fimg >> img[idx];
 				if(img[idx] < imini)
 					imini = img[idx];
 				if(img[idx] > imaxi)
 					imaxi = img[idx];
 			}
-			for(int k = x; k < 2*x; k++)
+			for(int k = y; k < 2*y; k++)
 			{
-				const int idx = i*x*y*2 + j*x*2 + k;
+				const int idx = i*x*y*2 + j*y*2 + k;
 				fedg >> img[idx];
 				if(img[idx] < emini)
 					emini = img[idx];
@@ -83,16 +93,16 @@ void readdata()
 	}
 	for(int i = 0; i < z; i++)
 	{
-		for(int j = y - 1; j >= 0; j--)
+		for(int j = x - 1; j >= 0; j--)
 		{
-			for(int k = 0; k < x; k++)
+			for(int k = 0; k < y; k++)
 			{
-				const int idx = i*x*y*2 + j*x*2 + k;
+				const int idx = i*x*y*2 + j*y*2 + k;
 				img[idx] = (img[idx]-imini)/(imaxi-imini);
 			}
-			for(int k = x; k < 2*x; k++)
+			for(int k = y; k < 2*y; k++)
 			{
-				const int idx = i*x*y*2 + j*x*2 + k;
+				const int idx = i*x*y*2 + j*y*2 + k;
 				img[idx] = (img[idx]-emini)/(emaxi-emini);
 			}
 		}
@@ -127,7 +137,7 @@ int main(int argc, char **argv)
 	readdata();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
-	glutInitWindowSize(x*2, y);
+	glutInitWindowSize(y*2, x);
 	glutInitWindowPosition(200, 200);
 	glutCreateWindow("simple viewer");
 	glutSpecialFunc(keyhandler);

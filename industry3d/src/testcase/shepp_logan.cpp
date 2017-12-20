@@ -51,27 +51,27 @@ void wrapper_shepp_logan(const Parameter &args, float *img, ushort *prj, int a,i
 const int nelipse = 10;
 const float center[][2] = {
     {0,     0},
-    {-0.0184,0},
-    {0,		0.22},
-    {0, 	-0.22},
-    {0.35,  0},
-    {0.1,   0},
-    {-0.1,  0},
-    {-0.605,-0.32},
-    {-0.605,0},
-    {-0.605,0.24}
+    {0,     -0.0184},
+    {0.22,  0},
+    {-0.22, 0},
+    {0,     0.35},
+    {0,     0.1},
+    {0,     -0.1},
+    {-0.08*2, -0.605},
+    {0,     -0.605},
+    {0.06*2,  -0.605}
 };
 const float axis[][2] = {
-    {0.92,  0.69},
-    {0.874, 0.6624},
-    {0.31,  0.11},
-    {0.41,  0.16},
-    {0.25,  0.21},
-    {0.092, 0.092},//origin*2
-    {0.092, 0.092},//origin*2
-    {0.092, 0.184},//origin*4
-    {0.092, 0.092},//origin*4
-    {0.0184,0.092}//origin**4
+	{0.69,	0.92},
+	{0.6624,0.874},
+	{0.11,	0.31},
+	{0.16,	0.41},
+	{0.21,	0.25},
+	{0.046,	0.046},
+	{0.046,	0.046},
+	{0.046*2,	0.023*2},
+	{0.023*2,	0.023*2},
+	{0.023*2,	0.046*2}
 };
 const float theta[] = {
     0,
@@ -125,11 +125,11 @@ void shepp_logan(const Parameter &args) {
                 img[(k*args.NZ+i)*args.NX+j] = 0.0;
                 for (int l = 0; l < nelipse; l++)
                 {
-                    const float axis1 = axis[l][0],
-                                axis2 = axis[l][1],
+                    const float axis1 = axis[l][1],
+                                axis2 = axis[l][0],
                                 axis3 = (axis1+axis2)/2;
-                    const float xx = (x-center[l][0]) * cos(theta[l]) + (y-center[l][1]) * sin(theta[l]),
-                                yy =-(x-center[l][0]) * sin(theta[l]) + (y-center[l][1]) * cos(theta[l]),
+                    const float xx = (x-center[l][1]) * cos(theta[l]) + (y-center[l][0]) * sin(theta[l]),
+                                yy =-(x-center[l][1]) * sin(theta[l]) + (y-center[l][0]) * cos(theta[l]),
                                 zz = z;
                     if(sqr(xx/axis1)+sqr(yy/axis2)+sqr(zz/axis3) <= 1)
                         img[(k*args.NZ+i)*args.NX+j] += gray[l];
