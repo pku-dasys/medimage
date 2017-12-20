@@ -30,7 +30,7 @@
 "AMPLIFIER" : 2,
 
 "LOWER_X" : 0,
-"UPPER_X" : 10,
+"UPPER_X" : 9,
 
 "OUTPUT_DIR" : "test_360x128x128_128_parallel_circle"
 }
