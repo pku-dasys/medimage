@@ -310,7 +310,12 @@ void gdIMAGE(int np, int ndx,
         normAp += sqr(accum_q);
     }
 
-    if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4) return;
+    if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4)
+    {
+        delete[] r;
+        delete[] d;
+        return;
+    }
 
     float c_1 = pSkalard/(normAp+args.ALPHA*nV_KepsNablap);
 
