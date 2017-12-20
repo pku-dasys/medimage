@@ -30,13 +30,13 @@ void keyhandler(int ch, int x, int y)
 		case GLUT_KEY_UP:
 			if(curz >= z-1) break;
 			curz++;
-			printf("current z = %d\n", curz);
+			//printf("current z = %d\n", curz);
 			break;
 
 		case GLUT_KEY_DOWN:
 			if(curz <= 0) break;
 			curz--;
-			printf("current z = %d\n", curz);
+			//printf("current z = %d\n", curz);
 			break;
 
 		default:
@@ -50,6 +50,9 @@ void normalkeyhandler(unsigned char ch, int x, int y)
 		case 'q':
 		case 27://esc
 			exit(0);
+		case 'z':
+			printf("current z = %d\n", curz);
+			break;
 	}
 }
 static float inf()
@@ -107,6 +110,8 @@ void readdata()
 			}
 		}
 	}
+	printf("image: max: %f, min: %f\nedge: max: %f, min: %f\n",
+		imaxi, imini, emaxi, emini);
 }
 int main(int argc, char **argv)
 {

@@ -28,5 +28,8 @@
 "LAMBDA_EDGE" : 0.001,
 "AMPLIFIER" : 5,
 
+"LOWER_X" : 0,
+"UPPER_X" : 0.2,
+
 "OUTPUT_DIR" : "test_360x128x128_128_parallel_ellipse"
 }
