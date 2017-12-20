@@ -128,8 +128,8 @@ void shepp_logan(const Parameter &args) {
                     const float axis1 = axis[l][1],
                                 axis2 = axis[l][0],
                                 axis3 = (axis1+axis2)/2;
-                    const float xx = (y-center[l][0]) * cos(theta[l]) + (x-center[l][1]) * sin(theta[l]),
-                                yy =-(y-center[l][0]) * sin(theta[l]) + (x-center[l][1]) * cos(theta[l]),
+                    const float xx = (y-center[l][0]) * cos(theta[l]) - (x-center[l][1]) * sin(theta[l]),
+                                yy = (y-center[l][0]) * sin(theta[l]) + (x-center[l][1]) * cos(theta[l]),
                                 zz = z;
                     if(sqr(xx/axis1)+sqr(yy/axis2)+sqr(zz/axis3) <= 1)
                         img[(k*args.NZ+i)*args.NX+j] += gray[l];
