@@ -105,10 +105,10 @@ void generate_cone_shepp_logan()
 
 int main(int argc, char** argv) {
 
-    // generate_parallel_circle();
-    // generate_parallel_sphere();
-    // generate_parallel_ellipse();
-    // generate_parallel_taiji();
+    generate_parallel_circle();
+    generate_parallel_sphere();
+    generate_parallel_ellipse();
+    generate_parallel_taiji();
     generate_cone_taiji();
     generate_cone_shepp_logan();
     return 0;
