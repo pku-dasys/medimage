@@ -23,7 +23,7 @@
 
 "ALPHA" : 10,
 "BETA" : 0.001,
-"EPSILON" : 0.005,
+"EPSILON" : 0.125,
 
 "LAMBDA_IMG" : 0.05,
 "LAMBDA_EDGE" : 0.01,

@@ -30,7 +30,7 @@
 "AMPLIFIER" : 5,
 
 "LOWER_X" : 0,
-"UPPER_X" : 10.2,
+"UPPER_X" : 12.4,
 
 "OUTPUT_DIR" : "test_360x256x256_128_cone_shepp_logan"
 }
