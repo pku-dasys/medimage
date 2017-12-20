@@ -87,13 +87,29 @@ void generate_cone_taiji()
 
     taiji(args);
 }
+void generate_cone_shepp_logan()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char cone_shepp_logan_json[] = "test_360x256x256_128_cone_shepp_logan.json";
+
+    strcpy(json[1], cone_shepp_logan_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    shepp_logan(args);
+}
 
 int main(int argc, char** argv) {
 
-    generate_parallel_circle();
-    generate_parallel_sphere();
-    generate_parallel_ellipse();
-    generate_parallel_taiji();
+    // generate_parallel_circle();
+    // generate_parallel_sphere();
+    // generate_parallel_ellipse();
+    // generate_parallel_taiji();
     generate_cone_taiji();
+    generate_cone_shepp_logan();
     return 0;
 }

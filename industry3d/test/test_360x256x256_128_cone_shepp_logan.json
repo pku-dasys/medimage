@@ -1,6 +1,6 @@
 {
-"RAW_DATA_FILE" : "test_360x256x256_128_cone_taiji.dr",
-"PRETRACING_FILE" : "test_360x256x256_128_cone_taiji_pre.txt",
+"RAW_DATA_FILE" : "test_360x256x256_128_cone_shepp_logan.dr",
+"PRETRACING_FILE" : "test_360x256x256_128_cone_shepp_logan_pre.txt",
 
 "NX" : 128,
 "NY" : 128,
@@ -29,5 +29,5 @@
 "LAMBDA_EDGE" : 0.001,
 "AMPLIFIER" : 5,
 
-"OUTPUT_DIR" : "test_360x256x256_128_cone_taiji"
+"OUTPUT_DIR" : "test_360x256x256_128_cone_shepp_logan"
 }
