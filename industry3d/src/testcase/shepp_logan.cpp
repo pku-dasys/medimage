@@ -77,7 +77,7 @@ const float theta[] = {
     0,
     0,
     PI/10,
-    PI/10,
+    -PI/10,
     0,
     0,
     0,
