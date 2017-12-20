@@ -48,6 +48,16 @@ void wrapper_shepp_logan(const Parameter &args, float *img, ushort *prj, int a,i
     delete[] wgt;
 }
 
+/*
+x paras[1]  <- pos rotate direction
+^
+|
+|
+|
+|                    ^ pos rotate direction
+0------->y paras[0]  |
+*/
+
 const int nelipse = 10;
 const float center[][2] = {
     {0,     0},
@@ -67,8 +77,8 @@ const float axis[][2] = {
 	{0.11,	0.31},
 	{0.16,	0.41},
 	{0.21,	0.25},
-	{0.046,	0.046},
-	{0.046,	0.046},
+	{0.046*2,	0.046*2},
+	{0.046*2,	0.046*2},
 	{0.046*2,	0.023*2},
 	{0.023*2,	0.023*2},
 	{0.023*2,	0.046*2}
@@ -123,17 +133,19 @@ void shepp_logan(const Parameter &args) {
                       y = ((float)j*2)/args.NY - 1,
                       z = ((float)k*2)/args.NZ - 1;
                 img[(k*args.NZ+i)*args.NX+j] = 0.0;
+                float tmp = 0.0;
                 for (int l = 0; l < nelipse; l++)
                 {
-                    const float axis1 = axis[l][1],
-                                axis2 = axis[l][0],
-                                axis3 = (axis1+axis2)/2;
-                    const float xx = (y-center[l][0]) * cos(theta[l]) - (x-center[l][1]) * sin(theta[l]),
-                                yy = (y-center[l][0]) * sin(theta[l]) + (x-center[l][1]) * cos(theta[l]),
+                    const float axisx = axis[l][1],
+                                axisy = axis[l][0],
+                                axisz = (axisx+axisy)/2;
+                    const float yy = (y-center[l][0]) * cos(-theta[l]) - (x-center[l][1]) * sin(-theta[l]),
+                                xx = (y-center[l][0]) * sin(-theta[l]) + (x-center[l][1]) * cos(-theta[l]),
                                 zz = z;
-                    if(sqr(xx/axis1)+sqr(yy/axis2)+sqr(zz/axis3) <= 1)
-                        img[(k*args.NZ+i)*args.NX+j] += gray[l];
+                    if(sqr(xx/axisx)+sqr(yy/axisy)+sqr(zz/axisz) <= 1)
+                        tmp += gray[l];
                 }
+                img[(k*args.NZ+i)*args.NX+j] = tmp;
             }
         }
     }
