@@ -93,7 +93,7 @@ void readdata()
 	}
 	for(int i = 0; i < z; i++)
 	{
-		for(int j = 0; j < x; j--)
+		for(int j = 0; j < x; j++)
 		{
 			for(int k = 0; k < y; k++)
 			{

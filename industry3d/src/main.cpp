@@ -408,7 +408,11 @@ void gdEDGE(int64_t *ind, float *wgt, int *numb,
         nD += accum_nD;
     }
 
-    if (fabs(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD)<1e-4) return;
+    if (fabs(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD)<1e-4)
+    {
+        delete[] d;
+        return;
+    }
 
     float c = nD/(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD);
 
