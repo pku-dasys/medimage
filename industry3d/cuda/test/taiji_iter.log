@@ -1,0 +1,76 @@
+CT3D reconstruction flow begins!
+================================
+Here are the options:
+Image size: NZ=128 NX=128 NY=128
+Number of angles: 360
+Number of detector row and channel: 256, 256
+10 iterations with 8 threads.
+Source to ISO and detectors: 450, 836.7
+Sample Size: 1
+Detector Pixel Size: 1
+
+iter = 0, lambda_img = 0.01, lambda_edge = 0.001
+||Af-g||^2 = 5.24809e+11
+time used = 478 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 1, lambda_img = 0.00714286, lambda_edge = 0.000714286
+||Af-g||^2 = 3.34371e+10
+time used = 544 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 2, lambda_img = 0.00555556, lambda_edge = 0.000555556
+||Af-g||^2 = 1.43942e+10
+time used = 621 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 3, lambda_img = 0.00454545, lambda_edge = 0.000454545
+||Af-g||^2 = 8.67574e+09
+time used = 523 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 4, lambda_img = 0.00384615, lambda_edge = 0.000384615
+||Af-g||^2 = 6.18362e+09
+time used = 603 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 5, lambda_img = 0.00333333, lambda_edge = 0.000333333
+||Af-g||^2 = 4.85435e+09
+time used = 609 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 6, lambda_img = 0.00294118, lambda_edge = 0.000294118
+||Af-g||^2 = 4.04892e+09
+time used = 619 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 7, lambda_img = 0.00263158, lambda_edge = 0.000263158
+||Af-g||^2 = 3.51441e+09
+time used = 523 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 8, lambda_img = 0.00238095, lambda_edge = 0.000238095
+||Af-g||^2 = 3.13496e+09
+time used = 472 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+iter = 9, lambda_img = 0.00217391, lambda_edge = 0.000217391
+||Af-g||^2 = 2.85134e+09
+time used = 474 seconds
+-------------------------------------------
+Start writing images ... done.
+Start writing edges ... done.
+===========================================
+TOTAL time used = 5466 seconds
+actual max raylen = 276, average raylen = 154.403
+Start writing images ... done.
+Start writing edges ... done.
