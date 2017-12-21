@@ -72,7 +72,7 @@ void taiji(const Parameter &args) {
         for (int i = 0; i<args.NX; ++i) {
             for (int j = 0; j<args.NY; ++j) {
                 const float zz = ((float)k*2/args.NZ - 1) / raidus;
-                const float sa = sin(zz*PI), ca = cos(zz*PI);
+                const float sa = sin(zz*0.5*PI), ca = cos(zz*0.5*PI);
                 const float xx = ((float)i*2/args.NX - 1)/raidus,
                             yy = ((float)j*2/args.NY - 1)/raidus;
                 const float x = xx * ca - yy * sa,

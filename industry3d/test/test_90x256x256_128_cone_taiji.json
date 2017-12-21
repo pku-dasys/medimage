@@ -1,0 +1,36 @@
+{
+"RAW_DATA_FILE" : "test_90x256x256_128_cone_taiji.dr",
+"PRETRACING_FILE" : "test_90x256x256_128_cone_taiji_pre.txt",
+
+"NX" : 128,
+"NY" : 128,
+"NZ" : 128,
+
+"NDX" : 256,
+"NDY" : 256,
+"NPROJ" : 90,
+
+"SOD" : 450.0,
+"SDD" : 836.70001221,
+
+"SAMPLESIZE" : 1.0,
+"PIXELSIZE" : 1.0,
+
+"BEAM" : "Cone",
+
+"THREAD_NUMB" : 20,
+"ITERATIONS" : 10,
+
+"ALPHA" : 8,
+"BETA" : 0.001,
+"EPSILON" : 0.125,
+
+"LAMBDA_IMG" :  0.01,
+"LAMBDA_EDGE" : 0.001,
+"AMPLIFIER" : 10,
+
+"LOWER_X" : 0,
+"UPPER_X" : 10,
+
+"OUTPUT_DIR" : "test_90x256x256_128_cone_taiji"
+}
