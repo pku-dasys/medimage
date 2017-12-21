@@ -237,7 +237,7 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
     float *w = new float[args.NDY];
     img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
     
-    float cos_tilt = sqrt(1-sqr(sin_tilt));
+    //float cos_tilt = sqrt(1-sqr(sin_tilt));
 
     // d = gradient = A*(g-Af) + alpha div{ ( v^2 + epsilon) (grad f) } (need confirm)
     // stepsize = <d,d> / (|Ad|^2 + alpha |(v^2+eps^2) grad d|^2 )
@@ -263,11 +263,14 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
         w[ndy] = accum_wgt;
     }
 
+    float average_d = 0;
+    int count_d = 0;
+
     float nV_KepsNablap = 0;
     float normAp = 0;
     float pSkalard = 0;
     // d += alpha*{ (v^2 \nabla f) + e^2 \laplace f }
-    #pragma omp parallel for reduction(+:nV_KepsNablap,pSkalard,normAp)
+    #pragma omp parallel for reduction(+:nV_KepsNablap,pSkalard,normAp,count_d,average_d)
     for (int ndy = 0; ndy < args.NDY; ++ndy) {
         int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
         float *__wgt = wgt + ndy*args.MAX_RAYLEN;
@@ -276,6 +279,9 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
         float accum_q = 0;
         float accum_nV_KepsNablap = 0;
         float accum_pSkalard = 0;
+
+        float accum_average_d = 0;
+        int accum_count_d = 0;
         for (int i = 0; i<__numb; ++i) {
             int k = ndy*args.MAX_RAYLEN+i;
             int64_t idx = __ind[i],nz,nx,ny;
@@ -329,6 +335,9 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
                           (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx  ,ny-1))
                     )
                 );
+            
+            accum_average_d += fabs(d[k]);
+            ++accum_count_d;
 
             accum_pSkalard += sqr(d[k]);
             accum_q += d[k]*__wgt[i];
@@ -342,7 +351,13 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
         nV_KepsNablap += accum_nV_KepsNablap;
         pSkalard += accum_pSkalard;
         normAp += sqr(accum_q);
+
+        average_d += accum_average_d;
+        count_d += accum_count_d;
     }
+
+    average_d /= count_d;
+    //cout << format("IMAGE : average_d = %1%, count_d = %2%") % average_d % count_d  << endl;
 
     if (fabs(normAp+args.ALPHA*nV_KepsNablap)<1e-4) {
         delete [] r;
@@ -369,8 +384,8 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            img_type tmp_f = out.img_data(nz,nx,ny) + args.LAMBDA_IMG * c_1 * d[k];
-            //img_type tmp_f = out.img_data(nz,nx,ny) + lambda * d[k];
+            //img_type tmp_f = out.img_data(nz,nx,ny) + args.LAMBDA_IMG * c_1 * d[k];
+            img_type tmp_f = out.img_data(nz,nx,ny) + args.LAMBDA_IMG * d[k];
 
             //if (fabs(tmp_f)>1e2) {
             //    cout << format("c_1= %1%, d = %2%, out.img=%3%")%c_1%d[k]%out.img_data(nz,nx,ny) <<endl;
@@ -392,14 +407,16 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
             const Parameter &args, const CTInput &in, CTOutput &out) {
     float *d = new float[args.NDY*args.MAX_RAYLEN];
 
-    float cos_tilt = sqrt(1-sqr(sin_tilt));
+    //float cos_tilt = sqrt(1-sqr(sin_tilt));
     
+    float average_d = 0;
+    int count_d = 0;
     // alpha * |grad f|^2 v^2  + beta/(4 epsilon) * (v-1)  -  beta * epsilon( laplace v)
     // <d,d> / (alpha |grad f|^2 d^2 + beta/(4 eps) * d^2 - beta * eps * (lap d))
     float nNablaD = 0;
     float tmp = 0;
     float nD = 0;
-    #pragma omp parallel for reduction(+:nNablaD,tmp,nD)
+    #pragma omp parallel for reduction(+:nNablaD,tmp,nD,average_d,count_d)
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
         int __numb = numb[ndy];
@@ -407,6 +424,9 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
         float accum_nNablaD = 0;
         float accum_tmp = 0;
         float accum_nD = 0;
+
+        float accum_average_d = 0;
+        int accum_count_d = 0;
         for (int i = 0; i<__numb; ++i) {
             int k = ndy*args.MAX_RAYLEN+i;
             int64_t idx,nz,nx,ny;
@@ -435,6 +455,9 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
                     +  out.edge_data(nz  ,nx  ,ny-1)
                 )
             );
+            
+            accum_average_d += fabs(d[k]);
+            ++accum_count_d;
 
             accum_nNablaD += 0.25*(
                 +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))
@@ -449,7 +472,13 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
         nNablaD += accum_nNablaD;
         tmp += accum_tmp;
         nD += accum_nD;
+
+        average_d += accum_average_d;
+        count_d += accum_count_d;
     }
+
+    average_d /= count_d;
+    //cout << format("EDGE : average_d = %1%, count_d = %2%") % average_d % count_d  << endl;
 
     if (fabs(args.ALPHA*tmp+args.BETA*args.EPSILON*nNablaD+(args.BETA/(4*args.EPSILON))*nD)<1e-4)
     {
@@ -475,8 +504,8 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
             nx = idx/args.NY;
             ny = idx%args.NY;
 
-            edge_type tmp_v = out.edge_data(nz,nx,ny) + args.LAMBDA_EDGE * c * d[k];
-            //edge_type tmp_v = out.edge_data(nz,nx,ny) + lambda*0.005 * d[k];
+            //edge_type tmp_v = out.edge_data(nz,nx,ny) + args.LAMBDA_EDGE * c * d[k];
+            edge_type tmp_v = out.edge_data(nz,nx,ny) + args.LAMBDA_EDGE * d[k];
             if (tmp_v<0) tmp_v = 0;
             if (tmp_v>1) tmp_v = 1;
 

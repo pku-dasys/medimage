@@ -32,6 +32,7 @@ void Parameter::parse_config(int argc, char** argv) {
     }
     catch (boost::property_tree::ptree_error &e) {
         printf("Could not read from the JSON file.\n");
+        cout << e.what() << endl;
         exit(1);
     }
 
