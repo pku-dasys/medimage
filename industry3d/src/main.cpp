@@ -283,7 +283,7 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
             idx %= args.NX*args.NY;
             nx = idx/args.NY;
             ny = idx%args.NY;
-
+/*
             d[k] = r[ndy]*__wgt[i]/w[ndy]
                 +args.ALPHA*(
                     +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
@@ -302,14 +302,41 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
                           +(out.img_data(nz  ,nx  ,ny-1)-out.img_data(nz  ,nx  ,ny  )))*cos_tilt
                     )
                 );
+*/
+            d[k] = r[ndy]*__wgt[i]/w[ndy]
+                +args.ALPHA*(
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1))
+                    +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
+                    -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  ))
+                    +sqr(args.EPSILON)*(
+                        +  out.img_data(nz  ,nx+1,ny  )
+                        +  out.img_data(nz  ,nx-1,ny  )
+                        -6*out.img_data(nz  ,nx  ,ny  )
+                        +  out.img_data(nz+1,nx  ,ny  )
+                        +  out.img_data(nz-1,nx  ,ny  )
+                        +  out.img_data(nz  ,nx  ,ny+1)
+                        +  out.img_data(nz  ,nx  ,ny-1)
+                    )
+                    +2*out.edge_data(nz  ,nx  ,ny)*(
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz-1,nx  ,ny  ))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz-1,nx  ,ny  ))
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz  ,nx-1,ny  ))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx-1,ny  ))
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz  ,nx  ,ny-1))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx  ,ny-1))
+                    )
+                );
 
             accum_pSkalard += sqr(d[k]);
             accum_q += d[k]*__wgt[i];
 
             accum_nV_KepsNablap += (sqr(out.edge_data(nz,nx,ny))+sqr(args.EPSILON))*(
-                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))*sin_tilt
+                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))
                 +sqr(d[k]-out.img_data(nz  ,nx-1,ny  ))
-                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))*cos_tilt
+                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))
             );
         }
         nV_KepsNablap += accum_nV_KepsNablap;
@@ -390,9 +417,9 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
             ny = idx%args.NY;
 
             float n = (
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))*sin_tilt
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))*cos_tilt
+                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
             );
 
             d[k] = -(
@@ -401,18 +428,18 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
                 -args.BETA*args.EPSILON*(
                     +  out.edge_data(nz  ,nx+1,ny  )
                     +  out.edge_data(nz  ,nx-1,ny  )
-                    -2*out.edge_data(nz  ,nx  ,ny  )
-                    +(+(out.edge_data(nz+1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  ))
-                      +(out.edge_data(nz-1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  )))*sin_tilt
-                    +(+(out.edge_data(nz  ,nx  ,ny+1)-out.edge_data(nz  ,nx  ,ny  ))
-                      +(out.edge_data(nz  ,nx  ,ny-1)-out.edge_data(nz  ,nx  ,ny  )))*cos_tilt
+                    -6*out.edge_data(nz  ,nx  ,ny  )
+                    +  out.edge_data(nz+1,nx  ,ny  )
+                    +  out.edge_data(nz-1,nx  ,ny  )
+                    +  out.edge_data(nz  ,nx  ,ny+1)
+                    +  out.edge_data(nz  ,nx  ,ny-1)
                 )
             );
 
-            accum_nNablaD += (
-                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))*sin_tilt
+            accum_nNablaD += 0.25*(
+                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))
                 +sqr(out.edge_data(nz  ,nx+1,ny  ) - out.edge_data(nz  ,nx-1,ny  ))
-                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))*cos_tilt
+                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))
             );
 
             accum_tmp += n*sqr(d[k]);
