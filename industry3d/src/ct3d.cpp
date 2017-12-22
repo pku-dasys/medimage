@@ -192,6 +192,12 @@ sino_type CTInput::sino_data(int p,int x,int y) const {
 
 void CTInput::read_sino(const string &raw_data_file) {
     ifstream fin(raw_data_file, ios::in | ios::binary);
+
+    if (!fin) {
+        cerr << "Cannot open " << raw_data_file <<endl;
+        exit(1);
+    }
+
     fin.seekg(1024);
     int64_t size = (int64_t)args.NPROJ * args.NDX * args.NDY;
     allocate_sino(size);

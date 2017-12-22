@@ -178,3 +178,75 @@ void shepp_logan(const Parameter &args) {
     delete [] img;
     delete [] prj;
 }
+
+
+void shepp_logan_straight(const Parameter &args) {
+
+    int *back_front = new int[args.NZ];
+    int *back_rear = new int[args.NZ];
+
+    for (int i = 0; i<args.NZ; ++i)
+        back_front[i] = args.NDX+1;
+    for (int i = 0; i<args.NZ; ++i)
+        back_rear[i] = -1;
+
+    boost::filesystem::path dr_file(args.RAW_DATA_FILE);
+
+    if (boost::filesystem::exists(dr_file))
+        return;
+
+    float *img = new float[args.NX*args.NY*args.NZ];
+    ushort *prj = new ushort[args.NPROJ*args.NDX*args.NDY];
+
+    for (int k = 0; k<args.NZ; ++k) {
+        for (int i = 0; i<args.NX; ++i) {
+            for (int j = 0; j<args.NY; ++j) {
+                float x = ((float)i*2)/args.NX - 1,
+                      y = ((float)j*2)/args.NY - 1,
+                      z = 0;
+                img[(k*args.NZ+i)*args.NX+j] = 0.0;
+                float tmp = 0.0;
+                for (int l = 0; l < nelipse; l++)
+                {
+                    const float axisx = axis[l][1],
+                                axisy = axis[l][0],
+                                axisz = (axisx+axisy)/2;
+                    const float yy = (y-center[l][0]) * cos(-theta[l]) - (x-center[l][1]) * sin(-theta[l]),
+                                xx = (y-center[l][0]) * sin(-theta[l]) + (x-center[l][1]) * cos(-theta[l]),
+                                zz = z;
+                    if(sqr(xx/axisx)+sqr(yy/axisy)+sqr(zz/axisz) <= 1)
+                        tmp += gray[l];
+                }
+                img[(k*args.NZ+i)*args.NX+j] = tmp;
+            }
+        }
+    }
+
+    for(int a = 0; a < args.NPROJ; a++) {
+        for (int ndx = 0; ndx<args.NDX; ++ndx) {
+            for (int ndy = 0; ndy<args.NDY; ++ndy) {
+                wrapper_shepp_logan(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy, back_front, back_rear);
+            }
+        }
+    }
+
+    ofstream fou;
+    fou.open(args.RAW_DATA_FILE, ios::binary);
+    char empty[1024] = {};
+    fou.write(empty,1024);
+    int64_t size = args.NDX * args.NDY;
+    for (int k = 0; k<args.NPROJ; ++k)
+        fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
+    fou.close();
+
+    //fou.open(args.PRETRACING_FILE);
+    //for (int i = 0; i<args.NZ; ++i)
+    //    fou<<back_front[i]<<' '<<back_rear[i]<<endl;
+    //fou.close();
+
+    delete [] back_front;
+    delete [] back_rear;
+
+    delete [] img;
+    delete [] prj;
+}

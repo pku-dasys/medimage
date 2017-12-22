@@ -11,3 +11,5 @@ void parallel_ellipse(const Parameter &args);
 void taiji(const Parameter &args);
 
 void shepp_logan(const Parameter &args);
+
+void shepp_logan_straight(const Parameter &args);
