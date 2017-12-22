@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
     //generate_parallel_sphere();
     //generate_parallel_ellipse();
     //generate_parallel_taiji();
-    //generate_cone_taiji();
+    generate_cone_taiji();
     //generate_cone_90_taiji();
     generate_cone_180_taiji();
     //generate_cone_shepp_logan();
