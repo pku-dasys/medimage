@@ -48,23 +48,23 @@ float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda,
 void minEDGE(int64_t *line, float *weight, int numb, float lambda,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void gdIMAGE(int np, int ndx, float sin_tilt,
+void gdIMAGE(int np, int ndx, float cos_tilt,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out);
 
-void gdEDGE(float sin_tilt,
+void gdEDGE(float cos_tilt,
             int64_t *ind, float *wgt, int *numb,
             const Parameter &args, const CTInput &in, CTOutput &out);
 
 void get_tracing(int alpha,int detectorX,int detectorY,
-                 int64_t *ind,float *wgt,int &numb, float &sin_tilt,
+                 int64_t *ind,float *wgt,int &numb, float &cos_tilt,
                  const Parameter &args) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
     getray(args,alpha,detectorX,detectorY,
            srcX,srcY,srcZ,dstX,dstY,dstZ,
-           sin_tilt);
+           cos_tilt);
 
     forward_proj(args,
                  srcX, srcY, srcZ,
@@ -78,10 +78,10 @@ void compute_single(float lambda, int alpha, int detectorX, int detectorY,
     int64_t *ind = new int64_t[args.MAX_RAYLEN];
     float *wgt = new float[args.MAX_RAYLEN];
     int numb;
-    float sin_tilt;
+    float cos_tilt;
 
     get_tracing(alpha, detectorX, detectorY,
-                ind, wgt, numb, sin_tilt, args);
+                ind, wgt, numb, cos_tilt, args);
 
     if (max_numb<numb) max_numb = numb;
     ave_numb += numb;
@@ -102,21 +102,21 @@ void compute(int np, int ndx,
     int64_t *ind = new int64_t[args.NDY*args.MAX_RAYLEN];
     float *wgt = new float[args.NDY*args.MAX_RAYLEN];
     int *numb = new int[args.NDY];
-    float sin_tilt;
+    float cos_tilt;
 
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         get_tracing(np, ndx, ndy,
-                    ind+ndy*args.MAX_RAYLEN, wgt+ndy*args.MAX_RAYLEN, numb[ndy], sin_tilt,
+                    ind+ndy*args.MAX_RAYLEN, wgt+ndy*args.MAX_RAYLEN, numb[ndy], cos_tilt,
                     args);
         if (max_numb<numb[ndy]) max_numb = numb[ndy];
         ave_numb += numb[ndy];
     }
 
-    gdIMAGE(np, ndx, sin_tilt,
+    gdIMAGE(np, ndx, cos_tilt,
             ind, wgt, numb,
             args, in, out);
 
-    gdEDGE(sin_tilt,
+    gdEDGE(cos_tilt,
            ind, wgt, numb,
            args, in, out);
 
@@ -230,17 +230,18 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void gdIMAGE(int np, int ndx, float sin_tilt,
+void gdIMAGE(int np, int ndx, float cos_tilt,
              int64_t *ind, float *wgt, int *numb,
              const Parameter &args, const CTInput &in, CTOutput &out) {
     float *r = new float[args.NDY];
     float *w = new float[args.NDY];
     img_type *d = new img_type[args.NDY*args.MAX_RAYLEN];
-    
-    //float cos_tilt = sqrt(1-sqr(sin_tilt));
 
-    // d = gradient = A*(g-Af) + alpha div{ ( v^2 + epsilon) (grad f) } (need confirm)
-    // stepsize = <d,d> / (|Ad|^2 + alpha |(v^2+eps^2) grad d|^2 )
+    float sqrsec = 1.0 / sqr(cos_tilt);
+    float tanp = sqrt(1.0-sqr(cos_tilt))/cos_tilt;
+
+    // d = gradient = A*(g-Af) + alpha div{ ( v^2 + epsilon^2) (grad f) }
+    // stepsize = <d,d> / (|Ad|^2 + alpha |(v^2+eps^2) grad d|^2 ) // what is grad d
     #pragma omp parallel for
     for (int ndy = 0; ndy<args.NDY; ++ndy) {
         int64_t *__ind = ind + ndy*args.MAX_RAYLEN;
@@ -289,26 +290,34 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
             idx %= args.NX*args.NY;
             nx = idx/args.NY;
             ny = idx%args.NY;
-/*
+
             d[k] = r[ndy]*__wgt[i]/w[ndy]
                 +args.ALPHA*(
                     +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
                     -sqr(out.edge_data(nz  ,nx-1,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx-1,ny  ))
                     +(+sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny+1) - out.img_data(nz  ,nx  ,ny  ))
-                      -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1)))*sin_tilt
+                      -sqr(out.edge_data(nz  ,nx  ,ny-1))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny-1)))*sqrsec
                     +(+sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz+1,nx  ,ny  ) - out.img_data(nz  ,nx  ,ny  ))
-                      -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  )))*cos_tilt
+                      -sqr(out.edge_data(nz-1,nx  ,ny  ))*(out.img_data(nz  ,nx  ,ny  ) - out.img_data(nz-1,nx  ,ny  )))*sqrsec
                     +sqr(args.EPSILON)*(
                         +  out.img_data(nz  ,nx+1,ny  )
                         +  out.img_data(nz  ,nx-1,ny  )
                         -2*out.img_data(nz  ,nx  ,ny  )
                         +(+(out.img_data(nz+1,nx  ,ny  )-out.img_data(nz  ,nx  ,ny  ))
-                          +(out.img_data(nz-1,nx  ,ny  )-out.img_data(nz  ,nx  ,ny  )))*sin_tilt
+                          +(out.img_data(nz-1,nx  ,ny  )-out.img_data(nz  ,nx  ,ny  )))*sqrsec
                         +(+(out.img_data(nz  ,nx  ,ny+1)-out.img_data(nz  ,nx  ,ny  ))
-                          +(out.img_data(nz  ,nx  ,ny-1)-out.img_data(nz  ,nx  ,ny  )))*cos_tilt
+                          +(out.img_data(nz  ,nx  ,ny-1)-out.img_data(nz  ,nx  ,ny  )))*sqrsec
+                    )
+                    +2*out.edge_data(nz  ,nx  ,ny)*(
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz-1,nx  ,ny  ))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz-1,nx  ,ny  ))*sqr(1.0+tanp)
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz  ,nx-1,ny  ))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx-1,ny  ))
+                        + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz  ,nx  ,ny-1))*
+                          (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx  ,ny-1))*sqr(1.0-tanp)
                     )
                 );
-*/
+/*
             d[k] = r[ndy]*__wgt[i]/w[ndy]
                 +args.ALPHA*(
                     +sqr(out.edge_data(nz  ,nx  ,ny  ))*(out.img_data(nz  ,nx+1,ny  ) - out.img_data(nz  ,nx  ,ny  ))
@@ -334,7 +343,7 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
                         + (out.edge_data(nz  ,nx  ,ny)-out.edge_data(nz  ,nx  ,ny-1))*
                           (out.img_data( nz  ,nx  ,ny)-out.img_data( nz  ,nx  ,ny-1))
                     )
-                );
+                );*/
             
             accum_average_d += fabs(d[k]);
             ++accum_count_d;
@@ -403,11 +412,12 @@ void gdIMAGE(int np, int ndx, float sin_tilt,
     delete [] d;
 }
 
-void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
+void gdEDGE(float cos_tilt, int64_t *ind, float *wgt, int *numb,
             const Parameter &args, const CTInput &in, CTOutput &out) {
     float *d = new float[args.NDY*args.MAX_RAYLEN];
 
-    //float cos_tilt = sqrt(1-sqr(sin_tilt));
+    float sqrsec = 1.0 / sqr(cos_tilt);
+    float tanp = sqrt(1.0-sqr(cos_tilt))/cos_tilt;
     
     float average_d = 0;
     int count_d = 0;
@@ -437,32 +447,32 @@ void gdEDGE(float sin_tilt, int64_t *ind, float *wgt, int *numb,
             ny = idx%args.NY;
 
             float n = (
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))
+                +sqr((out.img_data(nz,nx,ny) - out.img_data(nz-1,nx  ,ny  ))*(1.0+tanp))
                 +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx-1,ny  ))
-                +sqr(out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))
+                +sqr((out.img_data(nz,nx,ny) - out.img_data(nz  ,nx  ,ny-1))*(1.0-tanp))
             );
 
             d[k] = -(
                 +args.ALPHA*out.edge_data(nz,nx,ny)*n
                 +args.BETA/(4*args.EPSILON)*(out.edge_data(nz,nx,ny)-1)
                 -args.BETA*args.EPSILON*(
-                    +  out.edge_data(nz  ,nx+1,ny  )
-                    +  out.edge_data(nz  ,nx-1,ny  )
-                    -6*out.edge_data(nz  ,nx  ,ny  )
-                    +  out.edge_data(nz+1,nx  ,ny  )
-                    +  out.edge_data(nz-1,nx  ,ny  )
-                    +  out.edge_data(nz  ,nx  ,ny+1)
-                    +  out.edge_data(nz  ,nx  ,ny-1)
-                )
+                        +  out.edge_data(nz  ,nx+1,ny  )
+                        +  out.edge_data(nz  ,nx-1,ny  )
+                        -2*out.edge_data(nz  ,nx  ,ny  )
+                        +(+(out.edge_data(nz+1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  ))
+                          +(out.edge_data(nz-1,nx  ,ny  )-out.edge_data(nz  ,nx  ,ny  )))*sqrsec
+                        +(+(out.edge_data(nz  ,nx  ,ny+1)-out.edge_data(nz  ,nx  ,ny  ))
+                          +(out.edge_data(nz  ,nx  ,ny-1)-out.edge_data(nz  ,nx  ,ny  )))*sqrsec
+                    )
             );
             
             accum_average_d += fabs(d[k]);
             ++accum_count_d;
 
             accum_nNablaD += 0.25*(
-                +sqr(out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))
-                +sqr(out.edge_data(nz  ,nx+1,ny  ) - out.edge_data(nz  ,nx-1,ny  ))
-                +sqr(out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))
+                +sqr((out.edge_data(nz+1,nx  ,ny  ) - out.edge_data(nz-1,nx  ,ny  ))*(1.0+tanp))
+                +sqr((out.edge_data(nz  ,nx+1,ny  ) - out.edge_data(nz  ,nx-1,ny  )))
+                +sqr((out.edge_data(nz  ,nx  ,ny+1) - out.edge_data(nz  ,nx  ,ny-1))*(1.0-tanp))
             );
 
             accum_tmp += n*sqr(d[k]);

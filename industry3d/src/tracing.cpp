@@ -84,7 +84,7 @@ void getray(const Parameter &args,
             int alpha, int detectorX, int detectorY,
             float &srcX, float &srcY, float &srcZ,
             float &dstX, float &dstY, float &dstZ,
-            float &sin_tilt) {
+            float &cos_tilt) {
     if(args.BEAM == "Parallel")
         parallel(args,alpha,detectorX,detectorY,
                  srcX,srcY,srcZ,dstX,dstY,dstZ);
@@ -95,7 +95,7 @@ void getray(const Parameter &args,
         assert(false);
 
     float dist = sqrt(sqr(dstZ-srcZ)+sqr(dstY-srcY));
-    sin_tilt = fabs(dstZ-srcZ)/dist;
+    cos_tilt = fabs(dstY-srcY)/dist;
 }
 
 #define LAMBDA_X(i, x_s, x_d, L) (L*((float)i-x_s)/(x_d-x_s))

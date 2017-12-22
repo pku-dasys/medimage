@@ -1,0 +1,5 @@
+test/*.dr
+viewer/viewer
+test/*.log
+bin
+test/*/
