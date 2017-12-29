@@ -1,2 +1,2 @@
 #!/bin/sh
-../../bin/generate
+../bin/generate

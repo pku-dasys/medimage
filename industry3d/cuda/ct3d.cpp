@@ -32,6 +32,7 @@ void Parameter::parse_config(int argc, char** argv) {
     }
     catch (boost::property_tree::ptree_error &e) {
         printf("Could not read from the JSON file.\n");
+        cout << e.what() << endl;
         exit(1);
     }
 
@@ -52,6 +53,9 @@ void Parameter::parse_config(int argc, char** argv) {
         LAMBDA_IMG = root.get<float>("LAMBDA_IMG");
         LAMBDA_EDGE = root.get<float>("LAMBDA_EDGE");
         AMPLIFIER = root.get<int>("AMPLIFIER");
+
+        LOWER_X = root.get<float>("LOWER_X");
+        UPPER_X = root.get<float>("UPPER_X");
 
         NDX = root.get<int>("NDX");
         NDY = root.get<int>("NDY");
@@ -91,7 +95,6 @@ void Parameter::print_options() {
     cout << "Number of detector row and channel: " << NDX << ", " << NDY << endl;
     cout << ITERATIONS << " iterations with " << THREAD_NUMB << " threads." << endl;
     cout << "Source to ISO and detectors: " << SOD << ", " << SDD << endl;
-//    cout << "Length per detector: " << LENGTH_PER_DET << endl;
     cout << "Sample Size: " << SAMPLESIZE << endl;
     cout << "Detector Pixel Size: " << PIXELSIZE << endl;
     cout<<endl;
@@ -117,7 +120,9 @@ edge_type& CTOutput::edge_data(int z,int x,int y) {
     return edge[(z+1)*(args.NX+2)*(args.NY+2)+(x+1)*(args.NY+2)+(y+1)];
 }
 
-void CTOutput::write_img(const string &output_dir,int iteration) {
+void CTOutput::write_img(Parameter args, const string &output_dir,int iteration) {
+
+	/*
     cout<< "Start writing images ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
@@ -140,9 +145,23 @@ void CTOutput::write_img(const string &output_dir,int iteration) {
         fou.close();
     }
     cout<< "done." <<endl;
+	*/
+	string slice_output;
+	//slice_output = "IMG_"+boost::lexical_cast<string>(args.ALPHA)+'_'+boost::lexical_cast<string>(args.BETA)+'_'+boost::lexical_cast<string>(args.EPSILON)+'_'+boost::lexical_cast<string>(args.LAMBDA_IMG)+'_'+boost::lexical_cast<string>(args.LAMBDA_EDGE);
+	slice_output="IMG";
+	ofstream fou(slice_output);
+	fou.precision(6);
+	for (int x = 0; x<args.NX; ++x) {
+		for (int y = 0; y<args.NY; ++y) {
+			fou<< img_data(64, x, y) << ' ';
+		}
+		fou<<endl;
+	}
+	fou.close();
 }
 
-void CTOutput::write_edge(const string &output_dir,int iteration) {
+void CTOutput::write_edge(Parameter args, const string &output_dir,int iteration) {
+	/*
     cout<< "Start writing edges ... ";
     boost::filesystem::path dir(output_dir);
     if (!boost::filesystem::exists(dir))
@@ -165,6 +184,19 @@ void CTOutput::write_edge(const string &output_dir,int iteration) {
         fou.close();
     }
     cout<< "done." <<endl;
+	*/
+	string slice_output;
+	//slice_output = "EDGE_"+boost::lexical_cast<string>(args.ALPHA)+'_'+boost::lexical_cast<string>(args.BETA)+'_'+boost::lexical_cast<string>(args.EPSILON)+'_'+boost::lexical_cast<string>(args.LAMBDA_IMG)+'_'+boost::lexical_cast<string>(args.LAMBDA_EDGE);
+	slice_output="EDGE";
+	ofstream fou(slice_output);
+	fou.precision(6);
+	for (int x = 0; x<args.NX; ++x) {
+		for (int y = 0; y<args.NY; ++y) {
+			fou<< edge_data(64, x, y) << ' ';
+		}
+		fou<<endl;
+	}
+	fou.close();
 }
 
 CTOutput::CTOutput(const Parameter &_args) : args(_args) {
@@ -188,6 +220,12 @@ sino_type CTInput::sino_data(int p,int x,int y) const {
 
 void CTInput::read_sino(const string &raw_data_file) {
     ifstream fin(raw_data_file, ios::in | ios::binary);
+
+    if (!fin) {
+        cerr << "Cannot open " << raw_data_file <<endl;
+        exit(1);
+    }
+
     fin.seekg(1024);
     int64_t size = (int64_t)args.NPROJ * args.NDX * args.NDY;
     allocate_sino(size);

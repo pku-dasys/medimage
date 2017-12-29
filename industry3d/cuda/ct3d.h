@@ -36,6 +36,9 @@ public:
     float LAMBDA_EDGE;
     int AMPLIFIER;
 
+    float LOWER_X;
+    float UPPER_X;
+
     int THREAD_NUMB;
 
     float vx,vy,vz;
@@ -71,8 +74,8 @@ public:
     img_type& img_data(int z,int x,int y);
     edge_type& edge_data(int z,int x,int y);
 
-    void write_img(const string &output_dir,int iteration = -1);
-    void write_edge(const string &output_dir,int iteration = -1);
+    void write_img(Parameter args, const string &output_dir,int iteration = -1);
+    void write_edge(Parameter args, const string &output_dir,int iteration = -1);
 
     float minIMAGE(float Af, int64_t *line, float *weight, int numb, float lambda);
     void minEDGE(int64_t *line, float *weight, int numb, float lambda);
