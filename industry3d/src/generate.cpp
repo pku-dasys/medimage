@@ -194,6 +194,21 @@ void generate_parallel_jaw()
 
     jaw(args, "Jaw.json");
 }
+void generate_parallel_hip()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_hip_json[] = "test_360x150x350_350x150x150_parallel_hip.json";
+
+    strcpy(json[1], parallel_hip_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    hip(args, "Hip.json");
+}
 int main(int argc, char** argv) {
 
     //generate_parallel_circle();
@@ -207,6 +222,7 @@ int main(int argc, char** argv) {
     //generate_cone_90_shepp_logan();
     //generate_cone_180_shepp_logan_straight();
     //generate_cone_90_shepp_logan_straight();
-    generate_parallel_jaw();
+    //generate_parallel_jaw();
+    generate_parallel_hip();
     return 0;
 }
