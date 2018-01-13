@@ -16,7 +16,7 @@
 using namespace std;
 using namespace boost::property_tree;
 
-void wrapper_hip(const Parameter &args, float *img, ushort *prj, int a,int x,int y, int *bf,int *br) {
+void wrapper_head(const Parameter &args, float *img, ushort *prj, int a,int x,int y, int *bf,int *br) {
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
@@ -414,6 +414,46 @@ static float put_img(ptree& contents, float* img, const Parameter &args)
                 for(i = 0; i < 3; i++)
                     axis[i][1]/=norm;
             }
+            res_op = content.get_child_optional("achse");
+            if(res_op)
+            {
+                int i = 0;
+                float norm = 0;
+                ptree& res = res_op.get();
+                BOOST_FOREACH(ptree::value_type& pairs, res)
+                {
+                    axis[i][2] = pairs.second.get_value<float>();
+                    norm += sqr(axis[i++][2]);
+                }
+                norm = sqrt(norm);
+                for(i = 0; i < 3; i++)
+                    axis[i][2]/=norm;
+                if(!content.get_child_optional("a_x"))
+                {
+                    norm = 0;
+                    for(i = 0; i < 3; i++)
+                    {
+                        axis[i][0] = axis[(i+1)%3][1]*axis[(i+2)%3][2] - axis[(i+2)%3][1]*axis[(i+1)%3][2];
+                        norm += sqr(axis[i][0]);
+                    }
+                    norm = sqrt(norm);
+                    for(i = 0; i < 3; i++)
+                        axis[i][0]/=norm;
+                }
+                else
+                {
+                    norm = 0;
+                    for(i = 0; i < 3; i++)
+                    {
+                        axis[i][1] = axis[(i+1)%3][2]*axis[(i+2)%3][0] - axis[(i+2)%3][2]*axis[(i+1)%3][0];
+                        norm += sqr(axis[i][1]);
+                    }
+                    norm = sqrt(norm);
+                    for(i = 0; i < 3; i++)
+                        axis[i][1]/=norm;
+                }
+            }
+            else
             {
                 float norm = 0;
                 for(int i = 0; i < 3; i++)
@@ -481,6 +521,33 @@ static float put_img(ptree& contents, float* img, const Parameter &args)
                             img[(k*args.NX+i)*args.NY+j] = rho;
                     }
         }
+        else if(type == "Cone_y")
+        {
+            float r1=content.get<float>("r1"),
+                  r2=content.get<float>("r2"),
+                  l =content.get<float>("l")/2;
+            float mr = max(r1,r2);
+            sx = max(sx, (int)((cx-mr)/args.SAMPLESIZE));
+            dx = min(dx, (int)((cx+mr)/args.SAMPLESIZE));
+            sy = max(sy, (int)((cy-l)/args.SAMPLESIZE));
+            dy = min(dy, (int)((cy+l)/args.SAMPLESIZE));
+            sz = max(sz, (int)((cz-mr)/args.SAMPLESIZE));
+            dz = min(dz, (int)((cz+mr)/args.SAMPLESIZE));
+            for(int j = sy; j < dy; j++)
+            {
+                float cr = (args.SAMPLESIZE*j-(cy-l))*(r2-r1)/(2*l)+r1;
+                for(int i = sx; i < dx; i++)
+                {
+                    for(int k = sz; k < dz; k++)
+                    {
+                        float x = (args.SAMPLESIZE*i-cx),
+                              z = (args.SAMPLESIZE*k-cz);
+                        if(sqr(x)+sqr(z) <= sqr(cr))
+                            img[(k*args.NX+i)*args.NY+j] = rho;
+                    }
+                }
+            }
+        }
         else
         {
             printf("unknown type\n");
@@ -491,7 +558,7 @@ static float put_img(ptree& contents, float* img, const Parameter &args)
 
 
 
-void hip(const Parameter &args) {
+void head(const Parameter &args) {
 
     int *back_front = new int[args.NZ];
     int *back_rear = new int[args.NZ];
@@ -525,7 +592,7 @@ void hip(const Parameter &args) {
     for(int a = 0; a < args.NPROJ; a++) {
         for (int ndx = 0; ndx<args.NDX; ++ndx) {
             for (int ndy = 0; ndy<args.NDY; ++ndy) {
-                wrapper_hip(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy, back_front, back_rear);
+                wrapper_head(args,img,prj+a*args.NDX*args.NDY,a,ndx,ndy, back_front, back_rear);
             }
         }
     }
@@ -544,9 +611,26 @@ void hip(const Parameter &args) {
     //    fou<<back_front[i]<<' '<<back_rear[i]<<endl;
     //fou.close();
 
+    char buf[32];
+    for (int k=0; k<args.NZ; k++)
+    {
+        sprintf(buf, "pretracing/i_%d", k);
+        fou.open(buf);
+        for(int i=0;i<args.NX;i++)
+        {
+            for(int j=0;j<args.NY;j++)
+            {
+                fou << img[(k*args.NX+i)*args.NY+j] << ' ';
+            }
+            fou << endl;
+        }
+        fou.close();
+    }
+
     delete [] back_front;
     delete [] back_rear;
 
     delete [] img;
     delete [] prj;
 }
+

@@ -17,3 +17,5 @@ void shepp_logan_straight(const Parameter &args);
 void jaw(const Parameter &args);
 
 void hip(const Parameter &args);
+
+void head(const Parameter &args);
