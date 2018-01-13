@@ -115,7 +115,7 @@ void abdomen(const Parameter &args) {
                       //z = ((float)k*2)/args.NZ - 1;
                 img[(k*args.NZ+i)*args.NX+j] = 0.0;
                 if (sqr(y/(20/sz))+sqr(x/(12/sz)) <= 1)
-                    img[(k*args.NZ+i)*args.NX+j] = 0.8;
+                    img[(k*args.NZ+i)*args.NX+j] = 1.0;
             }
 
     //B
@@ -129,8 +129,9 @@ void abdomen(const Parameter &args) {
                       yy = sin(PI/3)*(x) + cos(PI/3)*(y+10/sz),
                       zz = z;
                 if (sqr(xx/(7/sz))+sqr(yy/(8/sz))+sqr(zz/(10/sz)) <= 1)
-                    img[(k*args.NZ+i)*args.NX+j] = 1.0;
+                    img[(k*args.NZ+i)*args.NX+j] = 1.06;
             }
+
     //Wirbelkoerper, unfinished
     for (int lev = 0; lev < 5; ++lev) {
         float xx = 0, yy = -7, zz = -10 + lev*5, l = 2;
@@ -142,29 +143,29 @@ void abdomen(const Parameter &args) {
                           z = ((float)k*2)/args.NZ - 1;
                     //x= -y; y = x;
                     if (sqr(x-xx/sz)+sqr(y-yy/sz) <= sqr(1.75/sz) && fabs(z-zz/sz) <= l/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                     if (fabs(x-xx/sz) <= sqrt(1.3725)/sz && fabs(y-(yy-1.4)/sz) <= 0.1/sz && fabs(z-zz/sz) <= l/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                     if (sqr(x-xx/sz)+sqr(y-yy/sz) <= sqr(1.5/sz) && fabs(z-zz/sz) <= l/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.180;
 
                     if (fabs(x-(xx-2)/sz) <= 2/sz && fabs(y-(yy-1.975)/sz) <= 0.475/sz && fabs(z-zz/sz) <= l/sz &&
                         (x*(-0.95) + y*(4-sqrt(1.3725)) < (-0.95*(xx-4)/sz + (4-sqrt(1.3725)*(yy-2.45)/sz))) &&
                         (-2*x + 32*y) > (-2*(xx-4)/sz + 32*(yy-2.45)/sz))
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                     if (fabs(x-(xx+2)/sz) <= 2/sz && fabs(y-(yy-1.975)/sz) <= 0.475/sz && fabs(z-zz/sz) <= l/sz &&
                         (x*0.95 + y*(4-sqrt(1.3725)) < (0.95*(xx+4)/sz + (4-sqrt(1.3725)*(yy-2.45)/sz))) &&
                         (2*x + 32*y) > (2*(xx+4)/sz + 32*(yy-2.45)/sz))
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                     if (fabs(x-xx/sz) <= 0.8/sz && fabs(y-(yy-2.35)/sz) <= 0.15/sz && fabs(z-zz/sz) <= l/sz &&
                         (-2*x + 4*y) > (-2*(xx+0.4)/sz + 4*(yy-2.45)/sz) &&
                         (-2*x - 4*y) < (-2*(xx-0.4)/sz - 4*(yy-2.45)/sz))
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
 
                     if (fabs(x-xx/sz) <= 0.4/sz && fabs(y-(yy-3.25)/sz) <= 0.8/sz && fabs(z-zz/sz) <= l/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                     if (sqr(x-xx/sz)+sqr(y-(yy-4.05)/sz) <= sqr(0.4/sz) && fabs(z-zz/sz) <= l/sz && y < (yy-4.05)/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.920;
                 }
     }
     // C & D
@@ -181,7 +182,7 @@ void abdomen(const Parameter &args) {
                                   y = ((float)j*2)/args.NY - 1,
                                   z = ((float)k*2)/args.NZ - 1;
                             if (sqr(x-xx/sz)+sqr(y-yy/sz)+sqr(z-zz/sz) <= sqr(r/sz))
-                                img[(k*args.NZ+i)*args.NX+j] = 0.8;
+                                img[(k*args.NZ+i)*args.NX+j] = 1.05;
                         }
             }
         }
@@ -196,7 +197,7 @@ void abdomen(const Parameter &args) {
                       z = ((float)k*2)/args.NZ - 1;
                 if (sqr(y/(3/sz))+sqr((x-6/sz)/(2/sz)) <= 1 && fabs(z) <= 20/sz/2) {
                     if (x <= 6.5/sz)
-                        img[(k*args.NZ+i)*args.NX+j] = 1.0;
+                        img[(k*args.NZ+i)*args.NX+j] = 1.06;
                     else
                         img[(k*args.NZ+i)*args.NX+j] = 0.0;
                 }
