@@ -132,7 +132,41 @@ void abdomen(const Parameter &args) {
                     img[(k*args.NZ+i)*args.NX+j] = 1.0;
             }
     //Wirbelkoerper, unfinished
+    for (int lev = 0; lev < 5; ++lev) {
+        float xx = 0, yy = -7, zz = -10 + lev*5, l = 2;
+        for (int k = 0; k < args.NZ; ++k)
+            for (int i = 0; i < args.NX; ++i)
+                for (int j = 0; j < args.NY; ++j) {
+                    float y = ((float)i*2)/args.NX - 1,
+                          x =-(((float)j*2)/args.NY - 1),
+                          z = ((float)k*2)/args.NZ - 1;
+                    //x= -y; y = x;
+                    if (sqr(x-xx/sz)+sqr(y-yy/sz) <= sqr(1.75/sz) && fabs(z-zz/sz) <= l/sz)
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                    if (fabs(x-xx/sz) <= sqrt(1.3725)/sz && fabs(y-(yy-1.4)/sz) <= 0.1/sz && fabs(z-zz/sz) <= l/sz)
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                    if (sqr(x-xx/sz)+sqr(y-yy/sz) <= sqr(1.5/sz) && fabs(z-zz/sz) <= l/sz)
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
 
+                    if (fabs(x-(xx-2)/sz) <= 2/sz && fabs(y-(yy-1.975)/sz) <= 0.475/sz && fabs(z-zz/sz) <= l/sz &&
+                        (x*(-0.95) + y*(4-sqrt(1.3725)) < (-0.95*(xx-4)/sz + (4-sqrt(1.3725)*(yy-2.45)/sz))) &&
+                        (-2*x + 32*y) > (-2*(xx-4)/sz + 32*(yy-2.45)/sz))
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                    if (fabs(x-(xx+2)/sz) <= 2/sz && fabs(y-(yy-1.975)/sz) <= 0.475/sz && fabs(z-zz/sz) <= l/sz &&
+                        (x*0.95 + y*(4-sqrt(1.3725)) < (0.95*(xx+4)/sz + (4-sqrt(1.3725)*(yy-2.45)/sz))) &&
+                        (2*x + 32*y) > (2*(xx+4)/sz + 32*(yy-2.45)/sz))
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                    if (fabs(x-xx/sz) <= 0.8/sz && fabs(y-(yy-2.35)/sz) <= 0.15/sz && fabs(z-zz/sz) <= l/sz &&
+                        (-2*x + 4*y) > (-2*(xx+0.4)/sz + 4*(yy-2.45)/sz) &&
+                        (-2*x - 4*y) < (-2*(xx-0.4)/sz - 4*(yy-2.45)/sz))
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+
+                    if (fabs(x-xx/sz) <= 0.4/sz && fabs(y-(yy-3.25)/sz) <= 0.8/sz && fabs(z-zz/sz) <= l/sz)
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                    if (sqr(x-xx/sz)+sqr(y-(yy-4.05)/sz) <= sqr(0.4/sz) && fabs(z-zz/sz) <= l/sz && y < (yy-4.05)/sz)
+                        img[(k*args.NZ+i)*args.NX+j] = 2.0;
+                }
+    }
     // C & D
     for (int id_z = 0; id_z < 1; ++id_z) {
         float zz = C_z[id_z], xx, yy, r;
@@ -227,34 +261,6 @@ void abdomen(const Parameter &args) {
         }
     }
 
-    // //test output
-    // {
-    //     auto output_dir = args.OUTPUT_DIR;
-    //     int iteration = -1;
-    //     //cout<< "Start writing images ... ";
-    //     boost::filesystem::path dir(output_dir);
-    //     if (!boost::filesystem::exists(dir))
-    //         boost::filesystem::create_directory(dir);
-    //     for (int z = 0; z<args.NZ; ++z) {
-    //         string slice_output;
-    //         if (iteration==-1)
-    //             slice_output = output_dir+"/i_"+boost::lexical_cast<string>(z);
-    //         else
-    //             slice_output = output_dir+"/"+boost::lexical_cast<string>(iteration)+"_i_"+boost::lexical_cast<string>(z);
-    //         if (iteration!=-1 && z!=args.NZ/2) continue;
-    //         ofstream fou(slice_output);
-    //         fou.precision(6);
-    //         for (int x = 0; x<args.NX; ++x) {
-    //             for (int y = 0; y<args.NY; ++y) {
-    //                 fou<< img[(z*args.NZ+x)*args.NX+y] << ' ';
-    //             }
-    //             fou<<endl;
-    //         }
-    //         fou.close();
-    //     }
-    //     //cout<< "done." <<endl;
-    // }
-
     ofstream fou;
     fou.open(args.RAW_DATA_FILE, ios::binary);
     char empty[1024] = {};
@@ -264,10 +270,10 @@ void abdomen(const Parameter &args) {
         fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
     fou.close();
 
-    fou.open(args.PRETRACING_FILE);
-    for (int i = 0; i<args.NZ; ++i)
-       fou<<back_front[i]<<' '<<back_rear[i]<<endl;
-    fou.close();
+    // fou.open(args.PRETRACING_FILE);
+    // for (int i = 0; i<args.NZ; ++i)
+    //    fou<<back_front[i]<<' '<<back_rear[i]<<endl;
+    // fou.close();
 
     delete [] back_front;
     delete [] back_rear;

@@ -19,3 +19,5 @@ void jaw(const Parameter &args);
 void hip(const Parameter &args);
 
 void head(const Parameter &args);
+
+void abdomen(const Parameter &args);
