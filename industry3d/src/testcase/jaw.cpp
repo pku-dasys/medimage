@@ -244,7 +244,7 @@ static float put_img(ptree& contents, float* img, const Parameter &args)
 
 
 
-void jaw(const Parameter &args, const char* jaw_file_path) {
+void jaw(const Parameter &args) {
 
     int *back_front = new int[args.NZ];
     int *back_rear = new int[args.NZ];
@@ -264,7 +264,7 @@ void jaw(const Parameter &args, const char* jaw_file_path) {
 
     ptree root;
     try {
-        read_json(jaw_file_path, root);
+        read_json(args.MODEL, root);
     }
     catch (boost::property_tree::ptree_error &e) {
         printf("Could not read from the JSON file.\n");

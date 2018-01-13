@@ -14,6 +14,6 @@ void shepp_logan(const Parameter &args);
 
 void shepp_logan_straight(const Parameter &args);
 
-void jaw(const Parameter &args, const char* jaw_file_path);
+void jaw(const Parameter &args);
 
-void hip(const Parameter &args, const char* jaw_file_path);
+void hip(const Parameter &args);

@@ -32,5 +32,6 @@
 "LOWER_X" : 0,
 "UPPER_X" : 10,
 
-"OUTPUT_DIR" : "test_360x180x180_120x180x100_parallel_jaw"
+"OUTPUT_DIR" : "test_360x180x180_120x180x100_parallel_jaw",
+"MODEL" : "Jaw.json"
 }

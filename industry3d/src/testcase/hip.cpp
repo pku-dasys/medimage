@@ -491,7 +491,7 @@ static float put_img(ptree& contents, float* img, const Parameter &args)
 
 
 
-void hip(const Parameter &args, const char* hip_file_path) {
+void hip(const Parameter &args) {
 
     int *back_front = new int[args.NZ];
     int *back_rear = new int[args.NZ];
@@ -511,7 +511,7 @@ void hip(const Parameter &args, const char* hip_file_path) {
 
     ptree root;
     try {
-        read_json(hip_file_path, root);
+        read_json(args.MODEL, root);
     }
     catch (boost::property_tree::ptree_error &e) {
         printf("Could not read from the JSON file.\n");
@@ -530,33 +530,19 @@ void hip(const Parameter &args, const char* hip_file_path) {
         }
     }
 
-    ofstream fou;
-    fou.open(args.RAW_DATA_FILE, ios::binary);
-    char empty[1024] = {};
-    fou.write(empty,1024);
-    int64_t size = args.NDX * args.NDY;
-    for (int k = 0; k<args.NPROJ; ++k)
-        fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
-    fou.close();
+    // ofstream fou;
+    // fou.open(args.RAW_DATA_FILE, ios::binary);
+    // char empty[1024] = {};
+    // fou.write(empty,1024);
+    // int64_t size = args.NDX * args.NDY;
+    // for (int k = 0; k<args.NPROJ; ++k)
+    //     fou.write((char*)(prj+k*args.NDX*args.NDY), sizeof(ushort) * size);
+    // fou.close();
 
     //fou.open(args.PRETRACING_FILE);
     //for (int i = 0; i<args.NZ; ++i)
     //    fou<<back_front[i]<<' '<<back_rear[i]<<endl;
     //fou.close();
-
-    for(int i=0; i<args.NZ; i++)
-    {
-        char buf[32];
-        sprintf(buf, "pretracing/i_%d", i);
-        fou.open(buf);
-        for(int j = 0; j<args.NX; j++)
-        {
-            for(int k = 0; k < args.NY; k++)
-                fou << img[(i*args.NX+j)*args.NY+k] << ' ';
-            fou << endl;
-        }
-        fou.close();
-    }
 
     delete [] back_front;
     delete [] back_rear;
@@ -564,4 +550,3 @@ void hip(const Parameter &args, const char* hip_file_path) {
     delete [] img;
     delete [] prj;
 }
-

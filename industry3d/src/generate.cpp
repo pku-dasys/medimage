@@ -192,7 +192,7 @@ void generate_parallel_jaw()
     args.parse_config(2,json);
     args.derive();
 
-    jaw(args, "Jaw.json");
+    jaw(args);
 }
 void generate_parallel_hip()
 {
@@ -207,7 +207,7 @@ void generate_parallel_hip()
     args.parse_config(2,json);
     args.derive();
 
-    hip(args, "Hip.json");
+    hip(args);
 }
 int main(int argc, char** argv) {
 

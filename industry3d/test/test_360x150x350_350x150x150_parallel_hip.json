@@ -32,5 +32,6 @@
 "LOWER_X" : 0,
 "UPPER_X" : 10,
 
-"OUTPUT_DIR" : "test_360x150x350_350x150x150_parallel_hip"
+"OUTPUT_DIR" : "test_360x150x350_350x150x150_parallel_hip",
+"MODEL" : "Hip.json"
 }

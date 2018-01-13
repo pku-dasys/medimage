@@ -53,6 +53,7 @@ public:
     string PRETRACING_FILE;
 
     string OUTPUT_DIR;
+    string MODEL;
 
     void parse_config(int argc, char** argv);
     
