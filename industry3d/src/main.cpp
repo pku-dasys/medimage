@@ -352,9 +352,9 @@ void gdIMAGE(int np, int ndx, float cos_tilt,
             accum_q += d[k]*__wgt[i];
 
             accum_nV_KepsNablap += (sqr(out.edge_data(nz,nx,ny))+sqr(args.EPSILON))*(
-                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))
+                +sqr(d[k]-out.img_data(nz-1,nx  ,ny  ))*sqr(1.0+tanp)
                 +sqr(d[k]-out.img_data(nz  ,nx-1,ny  ))
-                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))
+                +sqr(d[k]-out.img_data(nz  ,nx  ,ny-1))*sqr(1.0-tanp)
             );
         }
         nV_KepsNablap += accum_nV_KepsNablap;

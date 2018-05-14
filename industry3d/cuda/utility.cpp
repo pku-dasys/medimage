@@ -1,10 +1,59 @@
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+#include <cstring>
+#include <ctime>
+
+#include <sys/types.h>
+#include <sys/timeb.h>
+#include <sys/time.h>
+#include <sys/times.h>
+
+#include <fstream>
+#include <string>
+#include <boost/lexical_cast.hpp>
+
+#include "ct3d.h"
+#include "utility.h"
+
+using namespace std;
 
 bool equals_draw(float x,int y) {
     return fabs(x-y)<1.25;
 }
 
+int64_t timer_us( void )
+{
+#ifdef WIN32
+    struct _timeb tb;
+    _ftime(&tb);
+    return ((int64_t)tb.time * (1000) + (int64_t)tb.millitm) * (1000);
+#else
+    struct timeval tv_date;
+    gettimeofday( &tv_date, NULL );
+    return ( (int64_t) tv_date.tv_sec * 1000000 + (int64_t) tv_date.tv_usec );
+#endif
+}
+
+int64_t timer_s( void )
+{
+#ifdef WIN32
+    struct _timeb tb;
+    _ftime(&tb);
+    return ((int64_t)tb.time);
+#else
+    struct timeval tv_date;
+    gettimeofday( &tv_date, NULL );
+    return ( (int64_t) tv_date.tv_sec);
+#endif
+}
+
 float sqr(float x) { return x*x; }
 
+
+// u is the axis of the rotation
+// R is the rotating matrix
+// theta
 void rotate_axis_3d(float &x,float &y,float &z,float ux,float uy,float uz,float theta) {
     float c = 1/sqrt(sqr(ux)+sqr(uy)+sqr(uz));
     ux *= c;

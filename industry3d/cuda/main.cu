@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include "ct3d.h"
 #include "utility.h"
 #include "tracing.h"
@@ -16,47 +17,47 @@
 using namespace std;
 using boost::format;
 
+#define CUDA_DEBUG 0
+#define VERBOS 0
 
+
+#if CUDA_DEBUG
 class Debug{
 	
 	public:
-	static const long size;
-	
-	int *h_length;
-	int *d_length;
+	static const int64_t size;
+	float *h_length;
+	float *d_length;
 
 	Debug(){
 	
-		h_length=(int*)malloc(size*sizeof(int));
+		h_length=(float*)malloc(size*sizeof(float));
     	cudaError_t err = cudaSuccess;
-		err =cudaMalloc((void**)&d_length,size*sizeof(int));
+		err =cudaMalloc((void**)&d_length,size*sizeof(float));
 		if (err != cudaSuccess){
 			fprintf(stderr, "Failed to allocate debug vector (error code %s)!\n", cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
-
 	}
 	
-	void transferToHost(){
+	void print(){
     	cudaError_t err = cudaSuccess;
-		err=cudaMemcpy(h_length, d_length, sizeof(int)*size, cudaMemcpyDeviceToHost);
+		err=cudaMemcpy(h_length, d_length, sizeof(float)*size, cudaMemcpyDeviceToHost);
 		if (err != cudaSuccess){
 			fprintf(stderr, "Failed to copy debug vector (error code %s)!\n", cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
 
+		for (int j=0; j<128*128; ++j){
+				printf("%f ", h_length[j]);
+			printf("\n");
+		}
 	}
 
-	void print(){
-			for (int j=0; j<128*128; ++j)
-				for (int k=0; k<384; ++k)
-					printf("%d ", h_length[j*384+k]);
-	}
 
-
-};
-
-long const Debug::size = 128*128*384;
+}debug;
+int64_t const Debug::size =128*128;
+#endif
 
 
 int max_numb;
@@ -65,8 +66,8 @@ float ave_numb;
 __device__ int d_max_numb;
 __device__ float d_ave_numb;
 
-__device__ float cud_sqr(float x) {return x*x;}
 
+__device__ float cud_sqr(float x) {return x*x;}
 
 __device__ void cud_rotate_2d(float &x,float &y,float theta) {
     float X[2];
@@ -111,15 +112,10 @@ __device__ void cud_rotate_2d(float &x,float &y,float theta) {
 #endif
 #define ABS_VALUE(x) ( (x < 0) ? -(x) : (x) )
 
-__device__ int64_t cud_get_img_addr(const Parameter &args,int x,int y,int z) {
-    return (int64_t)z*args.NX*args.NY+x*args.NY+y;
-}
-
 __device__ void cud_forward_proj(int NX, int NY, int NZ,
                   float sx,float sy,float sz,
                   float dx,float dy,float dz,
                   int64_t *ind,float *wgt,int &numb) {
-
     int index = 0;
 
     float ray_x, ray_y, ray_z;
@@ -140,7 +136,7 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
     ray_z = dz - sz;
 
     // distance
-    L = sqrt( cud_sqr(ray_x)+cud_sqr(ray_y)+cud_sqr(ray_z) );
+    L = sqrtf( cud_sqr(ray_x)+cud_sqr(ray_y)+cud_sqr(ray_z) );
     lambda_max = L;
     
     //the the direction of increment in x, y and z
@@ -202,6 +198,7 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
 
     if (lambda_min >= lambda_max)
         return;
+
     lambda0 = lambda_min;   // lambda = lambda_min
     if (index == 1)
     {
@@ -260,7 +257,8 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
         {
             //(*sino)  += (lambda_x - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-    		ind[numb] =  (int64_t)v_z*NX*NY+v_x*NY+v_y;
+            //ind[numb] = v_z*NX*NY+v_x*NY+v_y;
+            ind[numb] = v_z*(NX+2)*(NY+2)+v_x*(NY+2)+v_y+1;
             wgt[numb] = lambda_x - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;
@@ -273,7 +271,8 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
         {
             //(*sino)  += (lambda_y - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-    		ind[numb] =  (int64_t)v_z*NX*NY+v_x*NY+v_y;
+            //ind[numb] = v_z*NX*NY+v_x*NY+v_y;
+            ind[numb] = v_z*(NX+2)*(NY+2)+v_x*(NY+2)+v_y+1;
             wgt[numb] = lambda_y - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;
@@ -286,7 +285,8 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
         {
             //(*sino)  += (lambda_z - lambda0) * Data(imageDataPtr, NX, NY, NZ, v_x, v_y, v_z);
             
-    		ind[numb] =  (int64_t)v_z*NX*NY+v_x*NY+v_y;
+            //ind[numb] = v_z*NX*NY+v_x*NY+v_y;
+            ind[numb] = v_z*(NX+2)*(NY+2)+v_x*(NY+2)+v_y+1;
             wgt[numb] = lambda_z - lambda0;
             //Af += f[ind[numb]]*wgt[numb];
             ++numb;
@@ -300,97 +300,90 @@ __device__ void cud_forward_proj(int NX, int NY, int NZ,
     }
 }
 
-__global__ void kernel(float LAMBDA_IMG, float LAMBDA_EDGE, float *f, float *v, float *g, int NX, int NY, int NZ, int NPROJ, int NDX, int NDY, int HALFDET, float PIXELSIZE, float SOD, float SDD, const int MAX_RAYLEN, float SAMPLESIZE, float HALFSIZE, float ALPHA, float BETA, float EPSILON,
-		int *length) {
+__global__ void kernel(char BEAM, float LAMBDA_IMG, float LAMBDA_EDGE, float *f, float *v, sino_type *g, int NX, int NY, int NZ, int NPROJ, int NDX, int NDY, int HALFDET, float PIXELSIZE, float SOD, float SDD, const int MAX_RAYLEN, float SAMPLESIZE, float HALFSIZE, float ALPHA, float BETA, float EPSILON
+#if CUDA_DEBUG
+		,float *length) {
+#else
+		){
+#endif
 
 
+	int detectorY=blockIdx.y%NDY;
 	int detectorX=blockIdx.x%NDX;
-	//int alpha=blockIdx.y%NPROJ;
-	int alpha=64;
-	int detectorY=threadIdx.x%NDY;
+	int alpha=threadIdx.x%NPROJ;
+
 
     float srcX,srcY,srcZ;
     float dstX,dstY,dstZ;
 
-	//cud_parallel
+	if (BEAM=='P'){
+		srcX = detectorY+0.5 - HALFDET;
+		srcX *= PIXELSIZE;
+		srcY = -SOD;
 
-    srcX = detectorY+0.5 - HALFDET;
-    srcX *= PIXELSIZE;
-    srcY = -SOD;
+		srcZ = HALFDET - detectorX - 0.5;
+		srcZ *= PIXELSIZE;
 
-    srcZ = HALFDET - detectorX - 0.5;
-    srcZ *= PIXELSIZE;
+		dstX = detectorY+0.5 - HALFDET;
+		dstX *= PIXELSIZE;
+		dstY = SDD-SOD;
 
-    dstX = detectorY+0.5 - HALFDET;
-    dstX *= PIXELSIZE;
-    dstY = SDD-SOD;
+		dstZ = HALFDET - detectorX - 0.5;
+		dstZ *= PIXELSIZE;
 
-    dstZ = HALFDET - detectorX - 0.5;
-    dstZ *= PIXELSIZE;
+		float theta = (float)alpha/NPROJ*2*PI;
 
-    float theta = (float)alpha/NPROJ*2*PI;
+		cud_rotate_2d(srcX, srcY, theta);
+		cud_rotate_2d(dstX, dstY, theta);
 
-    cud_rotate_2d(srcX, srcY, theta);
-    cud_rotate_2d(dstX, dstY, theta);
+		srcX /= SAMPLESIZE;
+		srcY /= SAMPLESIZE;
+		srcZ /= SAMPLESIZE;
+		dstX /= SAMPLESIZE;
+		dstY /= SAMPLESIZE;
+		dstZ /= SAMPLESIZE;
 
-    srcX /= SAMPLESIZE;
-    srcY /= SAMPLESIZE;
-    srcZ/= SAMPLESIZE;
-    dstX /= SAMPLESIZE;
-    dstY /= SAMPLESIZE;
-    dstZ /= SAMPLESIZE;
+		srcX += HALFSIZE;
+		srcY += HALFSIZE;
+		srcZ += HALFSIZE;
+		dstX += HALFSIZE;
+		dstY += HALFSIZE;
+		dstZ += HALFSIZE;
+	}else{
+		srcZ = 0.f;
+		srcX = 0.f;
+		srcY = -SOD;
+		float theta = (float)alpha/NPROJ*2*PI;
+		cud_rotate_2d(srcX, srcY, theta);
 
-    srcX += HALFSIZE;
-    srcY += HALFSIZE;
-    srcZ += HALFSIZE;
-    dstX += HALFSIZE;
-    dstY += HALFSIZE;
-    dstZ += HALFSIZE;
+		dstX = detectorY - HALFDET + 0.5f;
+		dstX *= PIXELSIZE;
+		dstY = (SDD - SOD);
+		dstZ = HALFDET - detectorX - 0.5f;
+		dstZ *= PIXELSIZE;
+		cud_rotate_2d(dstX, dstY, theta);
+
+		srcX /= SAMPLESIZE;
+		srcZ /= SAMPLESIZE;
+		srcY /= SAMPLESIZE;
+		dstX /= SAMPLESIZE;
+		dstY /= SAMPLESIZE;
+		dstZ /= SAMPLESIZE;
+
+		srcX += NX/2.f;
+		srcY += NY/2.f;
+		srcZ += NZ/2.f;
+		dstX += NX/2.f;
+		dstY += NY/2.f;
+		dstZ += NZ/2.f;
+	}
 
 
-	/*
-	//cud_cone
-    srcZ = 0.0;
-    srcX = 0.0;
-    srcY = -SOD;
-    float theta = (float)alpha/NPROJ*2*PI;
-    cud_rotate_2d(srcX, srcY, theta);
-
-    dstX = detectorY - HALFDET + 0.5;
-    dstX *= PIXELSIZE;
-    dstY = (SDD - SOD);
-    dstZ = HALFDET - detectorX - 0.5;
-    dstZ *= PIXELSIZE;
-    cud_rotate_2d(dstX, dstY, theta);
-
-    srcX /= SAMPLESIZE;
-    srcZ /= SAMPLESIZE;
-    srcY /= SAMPLESIZE;
-    dstX /= SAMPLESIZE;
-    dstY /= SAMPLESIZE;
-    dstZ /= SAMPLESIZE;
-
-    srcX += NX/2.0;
-    srcY += NY/2.0;
-    srcZ += NZ/2.0;
-    dstX += NX/2.0;
-    dstY += NY/2.0;
-    dstZ += NZ/2.0;
-	*/
-
-    float Af = -g[alpha*NDX*NDY+detectorX*NDY+detectorY];
 
 	int64_t line[384];
 	float weight[384];
 	float d[384];
-    int numb;
-
-	for (int i=0; i<MAX_RAYLEN; ++i){
-		d[i]=0.f;
-		line[i]=0;
-		weight[i]=0.f;
-		numb = 0;
-	}
+	int numb;
 
     cud_forward_proj(NX, NY, NZ,
                  srcX, srcY, srcZ,
@@ -400,84 +393,73 @@ __global__ void kernel(float LAMBDA_IMG, float LAMBDA_EDGE, float *f, float *v, 
     if (d_max_numb < numb) d_max_numb = numb;
     d_ave_numb += numb;
 
-
-	length[detectorX*NDY+detectorY]=numb;
-	return;
-
+    float Af = -g[alpha*NDX*NDY+detectorX*NDY+detectorY];
     for (int i = 0; i<numb; ++i) {
         Af += f[line[i]] * weight[i];
     }
+
+    float dist = sqrtf(cud_sqr(dstZ-srcZ)+cud_sqr(dstY-srcY));
+    float cos_tilt = fabs(dstY-srcY)/dist;
+    float sqrsec = 1.0 / cud_sqr(cos_tilt);
+    float tanp = sqrtf(1.0-cud_sqr(cos_tilt))/cos_tilt;
+
+	for (int i = 0; i<numb; ++i) {
+		int64_t ind = line[i];
+
+		d[i] = -Af*weight[i] 
+			+ALPHA*(
+				+cud_sqr(v[ind])*(f[ind+NY+2] - f[ind])
+				-cud_sqr(v[ind-(NY+2)])*(f[ind] - f[ind-(NY+2)])
+				+(cud_sqr(v[ind])*(f[ind+1] - f[ind]) - cud_sqr(v[ind-1])*(f[ind] - f[ind-1]))*sqrsec
+				+(cud_sqr(v[ind])*(f[ind+(NX+2)*(NY+2)] - f[ind]) - cud_sqr(v[ind-(NX+2)*(NY+2)])*(f[ind] - f[ind-(NX+2)*(NY+2)]))*sqrsec
+				+cud_sqr(EPSILON)*(
+					+f[ind+(NY+2)]+f[ind-(NY+2)]-2*f[ind]
+					+(f[ind+(NX+2)*(NY+2)]-f[ind]+f[ind-(NX+2)*(NY+2)]-f[ind])*sqrsec
+					+(f[ind+1]-f[ind]+f[ind-1]-f[ind])*sqrsec
+				)
+				+2*v[ind]*(
+					+ (v[ind]-v[ind-(NX+2)*(NY+2)])*(f[ind]-f[ind-(NX+2)*(NY+2)])*cud_sqr(1.f+tanp)
+					+ (v[ind]-v[ind-(NY+2)])*(f[ind]-f[ind-(NY+2)])
+					+ (v[ind]-v[ind-1])*(f[ind]-f[ind-1])*cud_sqr(1.f+tanp)
+				)
+			);
+
+	}
     for (int i = 0; i<numb; ++i) {
-        int64_t ind = line[i];
-        int64_t plain = ind%(NX*NY);
-        int x = plain/NY, y = plain%NY;
-
-        float tmp = 0.;
-        float lap = 0.;
-        
-        if (x+1<NX) tmp += cud_sqr(v[ind])*(v[ind+NY]-v[ind]);
-        else             tmp += cud_sqr(v[ind])*(       0        -v[ind]);
-        
-        if (y+1<NY) tmp += cud_sqr(v[ind])*(v[ind+1]-v[ind]);
-        else             tmp += cud_sqr(v[ind])*(     0    -v[ind]);
-        
-        if (x-1>=0)      tmp -= cud_sqr(v[ind-NY])*(v[ind]-v[ind-NY]);
-        else             tmp -=                        (v[ind]-0        );
-        
-        if (y-1>=0)      tmp -= cud_sqr(v[ind-1])*(v[ind]-v[ind-1]);
-        else             tmp -=                  (v[ind]-0       );
-        
-        if (x+1<NX) lap += v[ind+NY];
-        if (y+1<NY) lap += v[ind+1];
-        if (x-1>=0)      lap += v[ind-NY];
-        if (y-1>=0)      lap += v[ind-1];
-        lap -= 4*v[ind];
-
-        d[i] = -Af*weight[i]+ALPHA*(tmp+cud_sqr(EPSILON)*lap);
-    }
-    for (int i = 0; i<numb; i++) {
         int64_t ind = line[i];
         float tmp = f[ind] + LAMBDA_IMG * d[i];
         if (tmp<0) tmp = 0;
         f[ind] = tmp;
     }
 
-	for (int i=0; i<MAX_RAYLEN; ++i)
-		d[i]=0.f;
+	for (int i=0; i<numb; ++i){
+		
+		int64_t ind=line[i];
+
+		float n = (
+			+cud_sqr((f[ind] - f[ind-(NX+2)*(NY+2)])*(1.0+tanp))
+			+cud_sqr( f[ind] - f[ind-(NY+2)] )
+			+cud_sqr((f[ind] - f[ind-1])*(1.0-tanp))
+		);
+
+		d[i] = -(
+			+ALPHA*v[ind]*n
+			+BETA/(4*EPSILON)*(v[ind]-1)
+			-BETA*EPSILON*(
+					+ v[ind+(NY+2)]+v[ind-(NY-2)]-2*v[ind]
+					+(v[ind+(NX+2)*(NY+2)]-v[ind]+v[ind-(NX+2)*(NY+2)]-v[ind])*sqrsec
+					+(v[ind+1]-v[ind]+v[ind-1]-v[ind])*sqrsec
+				)
+			);
+	}
     for (int i = 0; i<numb; ++i) {
-        int64_t ind = line[i];
-        int64_t plain = ind%(NX*NY);
-        int x = plain/NY, y = plain%NY;
-
-        float a = 0.;
-        float b = 0.;
-        float c = 0.;
-
-        if (x-1>=0)      a += cud_sqr(v[ind]-v[ind-NY]);
-        else             a += cud_sqr(v[ind]-0        );
-        
-        if (y-1>=0)      a += cud_sqr(v[ind]-v[ind-1]);
-        else             a += cud_sqr(v[ind]-0       );
-        
-        a *= v[ind];
-        
-        b = v[ind]-1;
-
-        if (x+1<NX) c += v[ind+NY];
-        if (y+1<NY) c += v[ind+1];
-        if (x-1>=0)      c += v[ind-NY];
-        if (y-1>=0)      c += v[ind-1];
-        c -= 4*v[ind];
-        
-        d[i] = -ALPHA*a-BETA/(4*EPSILON)*b+BETA*EPSILON*c;
-    }
-    for (int i = 0; i<numb; i++) {
         int64_t ind = line[i];
         float tmp = v[ind] + LAMBDA_EDGE * d[i];
         if (tmp<0) tmp = 0;
-        if (tmp>1) tmp = 1;
+		if (tmp>1) tmp = 1;
         v[ind] = tmp;
     }
+
 }
 
 
@@ -488,45 +470,43 @@ void ct3d(Parameter &args,const CTInput &in,CTOutput &out) {
 
     out.allocate();
 
-    int64_t global_start = timer_s();
 
-
-	float *d_g=NULL;
-	float *d_f=NULL;
-	float *d_v=NULL;
+	sino_type *d_g=NULL;
+	img_type *d_f=NULL;
+	edge_type *d_v=NULL;
 
     cudaError_t err = cudaSuccess;
-	err=cudaMalloc((void**)&d_f,sizeof(float)*args.NX*args.NY*args.NZ);
+	err=cudaMalloc((void**)&d_f,sizeof(img_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2));
     if (err != cudaSuccess){
 		fprintf(stderr, "Failed to allocate device vector f (error code %s)!\n", cudaGetErrorString(err));
     	exit(EXIT_FAILURE);
     }
 
-	err=cudaMalloc((void**)&d_v,sizeof(float)*args.NX*args.NY*args.NZ);
+	err=cudaMalloc((void**)&d_v,sizeof(edge_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2));
     if (err != cudaSuccess){
 		fprintf(stderr, "Failed to allocate device vector v (error code %s)!\n", cudaGetErrorString(err));
     	exit(EXIT_FAILURE);
     }
 
-	err=cudaMalloc((void**)&d_g,sizeof(float)*args.NPROJ*args.NDX*args.NDY);
+	err=cudaMalloc((void**)&d_g,sizeof(sino_type)*args.NPROJ*args.NDX*args.NDY);
     if (err != cudaSuccess){
 		fprintf(stderr, "Failed to allocate device vector g (error code %s)!\n", cudaGetErrorString(err));
     	exit(EXIT_FAILURE);
     }
 	
-	err=cudaMemcpy(d_f, out.img, sizeof(float)*args.NX*args.NY*args.NZ, cudaMemcpyHostToDevice);
+	err=cudaMemcpy(d_f, out.img, sizeof(img_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess){
 		fprintf(stderr, "Failed to copy vector f from host to device (error code %s)!\n", cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 
-	err=cudaMemcpy(d_v, out.edge, sizeof(float)*args.NX*args.NY*args.NZ, cudaMemcpyHostToDevice);
+	err=cudaMemcpy(d_v, out.edge, sizeof(edge_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2), cudaMemcpyHostToDevice);
 	if (err != cudaSuccess){
 		fprintf(stderr, "Failed to copy vector v from host to device (error code %s)!\n", cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 
-	err=cudaMemcpy(d_g, in.sino, sizeof(float)*args.NPROJ*args.NDX*args.NDY, cudaMemcpyHostToDevice);
+	err=cudaMemcpy(d_g, in.sino, sizeof(sino_type)*args.NPROJ*args.NDX*args.NDY, cudaMemcpyHostToDevice);
 	if (err != cudaSuccess){
 		fprintf(stderr, "Failed to copy vector g from host to device (error code %s)!\n", cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
@@ -537,19 +517,25 @@ void ct3d(Parameter &args,const CTInput &in,CTOutput &out) {
 
     float init_lambda_img = 1/args.LAMBDA_IMG;
     float init_lambda_edge = 1/args.LAMBDA_EDGE;
-	Debug debug;
 
     for (int iters = 0; iters < args.ITERATIONS; ++iters) {
 
         args.LAMBDA_IMG = 1.0/(init_lambda_img+(float)iters/args.ITERATIONS*(args.AMPLIFIER-1)*init_lambda_img);
         args.LAMBDA_EDGE = 1.0/(init_lambda_edge+(float)iters/args.ITERATIONS*(args.AMPLIFIER-1)*init_lambda_edge);
+
+#if VERBOS
         cout << format("iter = %1%, lambda_img = %2%, lambda_edge = %3%") % iters % args.LAMBDA_IMG % args.LAMBDA_EDGE <<endl;
+#endif
 
-		dim3 blocks(128, 1, 1);
-		int threads=128;
+		dim3 blocks(512, 512, 1);
+		int threads=512;
+	
 
-
-		kernel<<<blocks, threads>>>(args.LAMBDA_IMG, args.LAMBDA_EDGE, d_f, d_v, d_g, args.NX, args.NY, args.NZ, args.NPROJ, args.NDX, args.NDY, args.HALFDET, args.PIXELSIZE, args.SOD, args.SDD, args.MAX_RAYLEN, args.SAMPLESIZE, args.HALFSIZE, args.ALPHA, args.BETA, args.EPSILON, debug.d_length);
+#if CUDA_DEBUG
+		kernel<<<blocks, threads>>>(args.BEAM[0], args.LAMBDA_IMG, args.LAMBDA_EDGE, d_f, d_v, d_g, args.NX, args.NY, args.NZ, args.NPROJ, args.NDX, args.NDY, args.HALFDET, args.PIXELSIZE, args.SOD, args.SDD, args.MAX_RAYLEN, args.SAMPLESIZE, args.HALFSIZE, args.ALPHA, args.BETA, args.EPSILON, debug.d_length);
+#else
+		kernel<<<blocks, threads>>>(args.BEAM[0], args.LAMBDA_IMG, args.LAMBDA_EDGE, d_f, d_v, d_g, args.NX, args.NY, args.NZ, args.NPROJ, args.NDX, args.NDY, args.HALFDET, args.PIXELSIZE, args.SOD, args.SDD, args.MAX_RAYLEN, args.SAMPLESIZE, args.HALFSIZE, args.ALPHA, args.BETA, args.EPSILON);
+#endif
 
 		err = cudaGetLastError();
 
@@ -558,15 +544,15 @@ void ct3d(Parameter &args,const CTInput &in,CTOutput &out) {
 			fprintf(stderr, "Failed to launch MumfordShah kernel (error code %s)!\n", cudaGetErrorString(err));
 			exit(EXIT_FAILURE);
 		}
-    }
+   }
 
-	err=cudaMemcpy(out.img, d_f, sizeof(float)*args.NX*args.NY*args.NZ, cudaMemcpyDeviceToHost);
+	err=cudaMemcpy(out.img, d_f, sizeof(img_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess){
 		fprintf(stderr, "Failed to copy vector f from device to host (error code %s)!\n", cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
 	}
 	
-	err=cudaMemcpy(out.edge, d_v, sizeof(float)*args.NX*args.NY*args.NZ, cudaMemcpyDeviceToHost);
+	err=cudaMemcpy(out.edge, d_v, sizeof(edge_type)*(args.NX+2)*(args.NY+2)*(args.NZ+2), cudaMemcpyDeviceToHost);
 	if (err != cudaSuccess){
 		fprintf(stderr, "Failed to copy vector v from device to host (error code %s)!\n", cudaGetErrorString(err));
 		exit(EXIT_FAILURE);
@@ -575,13 +561,14 @@ void ct3d(Parameter &args,const CTInput &in,CTOutput &out) {
 	cudaMemcpyFromSymbol(&max_numb, d_max_numb, sizeof(int));
 	cudaMemcpyFromSymbol(&ave_numb, d_ave_numb, sizeof(float));
 	
-    int64_t global_end = timer_s();
 	ave_numb /= args.NPROJ*args.NDX*args.NDY;
+#if VERBOS
     cout << "===========================================" <<endl;
-    cout << boost::format("TOTAL time used = %1% seconds") % (global_end-global_start) <<endl;
     cout<< boost::format("actual max raylen = %1%, average raylen = %2%") % max_numb % ave_numb << endl;
+#endif
 
-	debug.print();
+
+//	debug.print();
 	err=cudaFree(d_f);
     if (err != cudaSuccess){
        	fprintf(stderr, "Failed to free vector d_f (error code %s)!\n", cudaGetErrorString(err));
@@ -607,15 +594,16 @@ int main(int argc, char** argv) {
     Parameter args;
 
     args.parse_config(argc, argv);
-    args.print_options();
+#if VERBOS
+	args.print_options();
+#endif
 
     CTInput in = CTInput(args);
     CTOutput out = CTOutput(args);
 
     in.read_sino(args.RAW_DATA_FILE);
     ct3d(args,in,out);
-    out.write_img(args.OUTPUT_DIR);
-    out.write_edge(args.OUTPUT_DIR);
-
+    out.write_img(args, args.OUTPUT_DIR);
+    out.write_edge(args, args.OUTPUT_DIR);
     return 0;
 }

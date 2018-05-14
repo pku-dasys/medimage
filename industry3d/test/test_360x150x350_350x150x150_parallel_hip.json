@@ -1,0 +1,37 @@
+{
+"RAW_DATA_FILE" : "test_360x150x350_350x150x150_parallel_hip.dr",
+"PRETRACING_FILE" : "test_360x150x350_350x150x150_parallel_hip_pre.txt",
+
+"NX" : 350,
+"NY" : 150,
+"NZ" : 150,
+
+"NDX" : 150,
+"NDY" : 350,
+"NPROJ" : 360,
+
+"SOD" : 450.0,
+"SDD" : 836.70001221,
+
+"SAMPLESIZE" : 0.1,
+"PIXELSIZE" : 0.1,
+
+"BEAM" : "Parallel",
+
+"THREAD_NUMB" : 16,
+"ITERATIONS" : 10,
+
+"ALPHA" : 10,
+"BETA" : 0.001,
+"EPSILON" : 0.125,
+
+"LAMBDA_IMG" : 0.02,
+"LAMBDA_EDGE" : 0.0001,
+"AMPLIFIER" : 5,
+
+"LOWER_X" : 0,
+"UPPER_X" : 10,
+
+"OUTPUT_DIR" : "test_360x150x350_350x150x150_parallel_hip",
+"MODEL" : "Hip.json"
+}

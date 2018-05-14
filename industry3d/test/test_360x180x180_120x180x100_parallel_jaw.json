@@ -1,0 +1,37 @@
+{
+"RAW_DATA_FILE" : "test_360x180x180_120x180x100_parallel_jaw.dr",
+"PRETRACING_FILE" : "test_360x180x180_120x180x100_parallel_jaw_pre.txt",
+
+"NX" : 120,
+"NY" : 180,
+"NZ" : 100,
+
+"NDX" : 180,
+"NDY" : 180,
+"NPROJ" : 360,
+
+"SOD" : 450.0,
+"SDD" : 836.70001221,
+
+"SAMPLESIZE" : 0.1,
+"PIXELSIZE" : 0.1,
+
+"BEAM" : "Parallel",
+
+"THREAD_NUMB" : 16,
+"ITERATIONS" : 10,
+
+"ALPHA" : 10,
+"BETA" : 0.001,
+"EPSILON" : 0.125,
+
+"LAMBDA_IMG" : 0.02,
+"LAMBDA_EDGE" : 0.0001,
+"AMPLIFIER" : 5,
+
+"LOWER_X" : 0,
+"UPPER_X" : 10,
+
+"OUTPUT_DIR" : "test_360x180x180_120x180x100_parallel_jaw",
+"MODEL" : "Jaw.json"
+}

@@ -1,0 +1,37 @@
+{
+"RAW_DATA_FILE" : "test_360x256x256_256_parallel_head.dr",
+"PRETRACING_FILE" : "test_360x256x256_256_parallel_head_pre.txt",
+
+"NX" : 256,
+"NY" : 256,
+"NZ" : 256,
+
+"NDX" : 256,
+"NDY" : 256,
+"NPROJ" : 360,
+
+"SOD" : 450.0,
+"SDD" : 836.70001221,
+
+"SAMPLESIZE" : 0.1,
+"PIXELSIZE" : 0.1,
+
+"BEAM" : "Parallel",
+
+"THREAD_NUMB" : 16,
+"ITERATIONS" : 10,
+
+"ALPHA" : 10,
+"BETA" : 0.001,
+"EPSILON" : 0.125,
+
+"LAMBDA_IMG" : 0.02,
+"LAMBDA_EDGE" : 0.0001,
+"AMPLIFIER" : 5,
+
+"LOWER_X" : 0,
+"UPPER_X" : 10,
+
+"OUTPUT_DIR" : "test_360x256x256_256_parallel_head",
+"MODEL" : "Head.json"
+}

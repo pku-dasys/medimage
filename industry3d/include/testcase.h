@@ -13,3 +13,11 @@ void taiji(const Parameter &args);
 void shepp_logan(const Parameter &args);
 
 void shepp_logan_straight(const Parameter &args);
+
+void jaw(const Parameter &args);
+
+void hip(const Parameter &args);
+
+void head(const Parameter &args);
+
+void abdomen(const Parameter &args);

@@ -11,6 +11,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/optional.hpp>
 
 using namespace std;
 
@@ -34,6 +35,11 @@ void Parameter::parse_config(int argc, char** argv) {
         printf("Could not read from the JSON file.\n");
         cout << e.what() << endl;
         exit(1);
+    }
+    boost::optional<string> model_op = root.get_optional<string>("MODEL");
+    if(model_op)
+    {
+        MODEL = model_op.get();
     }
 
     try {

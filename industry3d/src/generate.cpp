@@ -179,18 +179,82 @@ void generate_cone_180_shepp_logan_straight()
 
     shepp_logan_straight(args);
 }
+void generate_parallel_jaw()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_jaw_json[] = "test_360x180x180_120x180x100_parallel_jaw.json";
+
+    strcpy(json[1], parallel_jaw_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    jaw(args);
+}
+void generate_parallel_hip()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_hip_json[] = "test_360x150x350_350x150x150_parallel_hip.json";
+
+    strcpy(json[1], parallel_hip_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    hip(args);
+}
+void generate_parallel_head()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_head_json[] = "test_360x256x256_256_parallel_head.json";
+
+    strcpy(json[1], parallel_head_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    head(args);
+}
+void generate_parallel_abdomen()
+{
+    char **json = new char*[2];
+    json[0] = new char[256]{};
+    json[1] = new char[256]{};
+
+    char parallel_abdomen_json[] = "test_360x256x256_256_parallel_abdomen.json";
+
+    strcpy(json[1], parallel_abdomen_json);
+    Parameter args;
+    args.parse_config(2,json);
+    args.derive();
+
+    abdomen(args);
+}
 int main(int argc, char** argv) {
 
     //generate_parallel_circle();
     //generate_parallel_sphere();
     //generate_parallel_ellipse();
     //generate_parallel_taiji();
-    generate_cone_taiji();
+    //generate_cone_taiji();
     //generate_cone_90_taiji();
-    generate_cone_180_taiji();
+    //generate_cone_180_taiji();
     //generate_cone_shepp_logan();
     //generate_cone_90_shepp_logan();
-    generate_cone_180_shepp_logan_straight();
+    //generate_cone_180_shepp_logan_straight();
     //generate_cone_90_shepp_logan_straight();
+    //generate_parallel_jaw();
+    //generate_parallel_hip();
+    //generate_parallel_head();
+    generate_parallel_abdomen();
     return 0;
 }
