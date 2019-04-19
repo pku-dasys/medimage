@@ -1,3 +1,8 @@
+# DATA Storage
+
+/helical_old/data
+/helical/data
+
 # Prerequisites
 *.d
 

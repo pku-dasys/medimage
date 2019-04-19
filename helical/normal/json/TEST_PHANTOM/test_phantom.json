@@ -1,0 +1,41 @@
+{
+"table_filename" : "test_phantom_pos",
+"sino_filename" : "test_phantom_raw",
+"image_filename" : "test_phantom_f",
+"edge_filename" : "test_phantom_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+
+"NX" : 64,
+"NY" : 64,
+
+"NDETECTOR" : 736,
+"NCHANNEL" : 16,
+"NPROJ" : 720,
+"NPROJ_TURN" :180,
+
+"SOURCE_TO_ISO" : 625.6,
+"SOURCE_TO_DET" : 1097.6,
+
+"OFF_CENTER" : 1.75,
+
+"LENGTH_PER_DET" : 0.06786112,
+"LENGTH_PER_DET_Z" : 2.05239465,
+
+"PITCH_VALUE" : 16,
+
+"vz" : 1.0,
+"vx" : 1.0,
+"vy" : 1.0,
+"PROJ_OFFSET" : 2,
+"INIT_PROJ" : 43,
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 1,
+
+"ALPHA":1.0,
+"BETA":0.1,
+"EPSILON":0.05,
+
+"OUTPUT_DIR" : "slices_test_new"
+}

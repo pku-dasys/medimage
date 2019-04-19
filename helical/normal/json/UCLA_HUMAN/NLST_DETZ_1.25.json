@@ -1,0 +1,41 @@
+{
+"table_filename" : "../data/projection/proj_3D/UCLA_HUMAN/NLST_R0928_POS",
+"sino_filename" : "../data/projection/proj_3D/UCLA_HUMAN/NLST_R0928_RAW",
+"image_filename" : "NLST_f",
+"edge_filename" : "NLST_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+
+"NX" : 771,
+"NY" : 771,
+
+"NDETECTOR" : 672,
+"NCHANNEL" : 16,
+"NPROJ" : 5800,
+"NPROJ_TURN" : 1160,
+
+"SOURCE_TO_ISO" : 570.0,
+"SOURCE_TO_DET" : 1040.0,
+
+"OFF_CENTER" : 0,
+
+"LENGTH_PER_DET" : 0.0775862,
+"LENGTH_PER_DET_Z" : 1.25,
+
+"PITCH_VALUE" : 18.0,
+
+"vz" : 1.0,
+"vx" : 0.6641,
+"vy" : 0.6641,
+"PROJ_OFFSET" : 3,
+"INIT_PROJ" : 12,
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 10,
+
+"ALPHA":1.0,
+"BETA":0.1,
+"EPSILON":0.05,
+
+"OUTPUT_DIR" : "./slices/UCLA_HUMAN/slices_detz_search/"
+}

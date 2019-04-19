@@ -1,0 +1,42 @@
+{
+"table_filename" : "../data/projection/proj_3D/SHEPP_LOGAN/shepp_gauss_9_pos",
+"rebined_folder" : "../data/projection/proj_2D/SHEPP_LOGAN/shepp_gauss_9_raw/",
+"image_filename" : "shepp_gauss_9_f",
+"edge_filename" : "shepp_gauss_9_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+
+"NX" : 512,
+"NY" : 512,
+"NZ" : 512,
+
+"NDETECTOR" : 736,
+"NCHANNEL" : 16,
+"NPROJ" : 11520,
+"NPROJ_TURN" :360,
+
+"SOURCE_TO_ISO" : 595.0,
+"SOURCE_TO_DET" : 1085.6,
+
+"OFF_CENTER" : 1.75,
+
+"LENGTH_PER_DET" : 0.06786112,
+"LENGTH_PER_DET_Z" : 2.05239465,
+
+"PITCH_VALUE" : 16.0,
+
+"vz" : 1.0,
+"vx" : 1.0,
+"vy" : 1.0,
+"PROJ_OFFSET" : 2,
+"INIT_PROJ" : 43,
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 1,
+
+"ALPHA":1.0,
+"BETA":0.1,
+"EPSILON":0.05,
+
+"OUTPUT_DIR" : "./slices/SHEPP_LOGAN/slices_1mm"
+}

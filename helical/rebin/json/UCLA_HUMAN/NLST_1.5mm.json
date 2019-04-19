@@ -1,0 +1,32 @@
+{
+"image_filename" : "NLST_f",
+"edge_filename" : "NLST_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+"rebined_folder":"../data/projection/proj_2D/UCLA_HUMAN/NLST_RAW/",
+
+"NX" : 512,
+"NY" : 512,
+"NZ" : 60,
+
+"vx" : 1,
+"vy" : 1,
+
+"NDETECTOR" : 672,
+"NPROJ" : 900,
+
+"SOURCE_TO_ISO" : 570.0,
+"SOURCE_TO_DET" : 1040.0,
+
+"OFF_CENTER" : 1.75,
+"LENGTH_PER_DET" : 0.0775862,
+
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 5,
+
+"ALPHA":1.0,
+"BETA":0.1,
+"EPSILON":0.01,
+"OUTPUT_DIR" : "./slices/UCLA_HUMAN/slices_1.5mm/"
+}

@@ -1,0 +1,32 @@
+{
+"image_filename" : "patient_29mA_test_f",
+"edge_filename" : "patient_29mA_test_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+"rebined_folder":"../data/projection/proj_2D/PATIENT_PKUCANCER/patient_raw_29mA_test/",
+
+"NX" : 512,
+"NY" : 512,
+"NZ" : 57,
+
+"NDETECTOR" : 832,
+"NPROJ" : 1152,
+
+"SOURCE_TO_ISO" : 625.6,
+"SOURCE_TO_DET" : 1097.6,
+
+"OFF_CENTER" : 1.75,
+"LENGTH_PER_DET" : 0.06786112,
+
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 3,
+
+"vx": 0.725,
+"vy": 0.725,
+
+"ALPHA":0.1,
+"BETA":0.01,
+"EPSILON":0.001,
+"OUTPUT_DIR" : "./slices/PATIENT_PKUCANCER/slices_5mm/"
+}

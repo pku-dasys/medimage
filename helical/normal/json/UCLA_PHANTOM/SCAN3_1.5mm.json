@@ -1,0 +1,41 @@
+{
+"table_filename" : "../data/projection/proj_3D/UCLA_PHANTOM/SCAN3_POS",
+"sino_filename" : "../data/projection/proj_3D/UCLA_PHANTOM/SCAN3_RAW",
+"image_filename" : "SCAN3_f",
+"edge_filename" : "SCAN3_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+
+"NX" : 874,
+"NY" : 874,
+
+"NDETECTOR" : 736,
+"NCHANNEL" : 16,
+"NPROJ" : 14523,
+"NPROJ_TURN" : 1152,
+
+"SOURCE_TO_ISO" : 595.0,
+"SOURCE_TO_DET" : 1085.6,
+
+"OFF_CENTER" : 1.75,
+
+"LENGTH_PER_DET" : 0.06786112,
+"LENGTH_PER_DET_Z" : 1.2,
+
+"PITCH_VALUE" : 19.2,
+
+"vz" : 1.5,
+"vx" : 0.5859,
+"vy" : 0.5859,
+"PROJ_OFFSET" : 2,
+"INIT_PROJ" : 43,
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 5,
+
+"ALPHA":0.0,
+"BETA":0.5,
+"EPSILON":0.05,
+
+"OUTPUT_DIR" : "./slices/UCLA_PHANTOM/slices_1.5mm/"
+}

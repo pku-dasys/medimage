@@ -1,0 +1,32 @@
+{
+"image_filename" : "SCAN1_f",
+"edge_filename" : "SCAN1_v",
+"init_f_filename" : "",
+"init_v_filename" : "",
+"rebined_folder":"../data/projection/proj_2D/UCLA_PHANTOM/SCAN1/",
+
+"NX" : 874,
+"NY" : 874,
+"NZ" : 141,
+
+"NDETECTOR" : 736,
+"NPROJ" : 1152,
+
+"SOURCE_TO_ISO" : 595.0,
+"SOURCE_TO_DET" : 1085.6,
+
+"OFF_CENTER" : 1.75,
+"LENGTH_PER_DET" : 0.06786112,
+
+
+"THREAD_NUMB" : 16,
+"MS_ITERATIONS" : 3,
+
+"vx": 0.5859,
+"vy": 0.5859,
+
+"ALPHA":0.1,
+"BETA":0.01,
+"EPSILON":0.001,
+"OUTPUT_DIR" : "./slices/UCLA_PHANTOM/slices_1.5mm/"
+}
