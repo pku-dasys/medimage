@@ -53,10 +53,19 @@ OBJECTS += \
 $(pwd)/$(BUILD_DIR)/main.o \
 $(pwd)/$(BUILD_DIR)/ray.o
 
+# zcu102
+# 0 – 75 MHz
+# 1 – 100 MHz
+# 2 – 150MHz
+# 3 – 200 MHz
+# 4 – 300 MHz
+# 5 – 400 MHz
+# 6 – 600 MHz
+
 # SDS Options
 HW_FLAGS := 
 ifneq ($(TARGET), cpu_emu)
-	HW_FLAGS += -sds-hw ray ray.cpp -clkid 4 -sds-end
+	HW_FLAGS += -sds-hw ray ray.cpp -clkid 3 -sds-end
 endif
 
 EMU_FLAGS := 
@@ -74,7 +83,7 @@ LFLAGS = "$@" "$<"
 
 SDSFLAGS := -sds-pf $(PLATFORM) \
 		-target-os $(TARGET_OS) \
-		-dmclkid 6
+		-dmclkid 3
 ifeq ($(VERBOSE), 1)
 SDSFLAGS += -verbose 
 endif
@@ -120,7 +129,7 @@ else
 	$(info "This Release Doesn't Support Automated Hardware Execution")
 endif
 
-.PHONY: cleanall clean ultraclean
+.PHONY: cleanall clean
 clean:
 	$(RM) $(BUILD_DIR)/$(EXECUTABLE) $(OBJECTS)
 
