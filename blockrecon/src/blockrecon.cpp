@@ -250,8 +250,29 @@ void BlockRecon() {
         
         g_relax = (0.618)*(i-1);
 
-        if (i>5) {
-        for (int extra = 0; extra<2; extra++) {
+        // if (i>5) {
+        // for (int extra = 0; extra<2; extra++) {
+        // for (int k = 0; k<NBLK; ++k)
+        //     padding(k);
+        
+        // for (int loop = 0; loop<total; ++loop) {
+        //     int np = t[loop]/NRAY, nr = t[loop]%NRAY;
+        //     int line[IMGSIZE*2];
+        //     float weight[IMGSIZE*2];
+        //     int numb;
+        //     float snorm;
+
+        //     wray(np, nr, line, weight, &numb, &snorm);
+
+        //     for (int k = 0; k<NBLK; ++k) {
+        //         minIMAGE(k,np,nr,line,weight,numb,snorm);
+        //         minEDGE(k,np,nr,line,weight,numb);
+        //     }
+        // }
+        // }
+        // i++;
+        // }
+        // else {
         for (int k = 0; k<NBLK; ++k)
             padding(k);
         
@@ -269,28 +290,7 @@ void BlockRecon() {
                 minEDGE(k,np,nr,line,weight,numb);
             }
         }
-        }
-        i++;
-        }
-        else {
-        for (int k = 0; k<NBLK; ++k)
-            padding(k);
-        
-        for (int loop = 0; loop<total; ++loop) {
-            int np = t[loop]/NRAY, nr = t[loop]%NRAY;
-            int line[IMGSIZE*2];
-            float weight[IMGSIZE*2];
-            int numb;
-            float snorm;
-
-            wray(np, nr, line, weight, &numb, &snorm);
-
-            for (int k = 0; k<NBLK; ++k) {
-                minIMAGE(k,np,nr,line,weight,numb,snorm);
-                minEDGE(k,np,nr,line,weight,numb);
-            }
-        }
-        }
+        // }
 
         for (int k = 0; k<NBLK; ++k)
             A_blk(g_dot[k], k, f[k]);
@@ -320,7 +320,7 @@ void BlockRecon() {
                 cout<<"g - global_g: ";
                 for (int k = 0; k<NBLK; ++k) {
                     cout<<g[k][p][r]-global_g[k][p][r]<<"\t\t";
-                    dou<<g[k][p][r]-global_g[k][p][r]<<'t';
+                    dou<<g[k][p][r]-global_g[k][p][r]<<'\t';
                 }
                 cout<<endl;
             }

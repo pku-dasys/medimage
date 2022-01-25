@@ -11,7 +11,7 @@ const int MIDRAY = NRAY/2;
 const int MIDPIX = IMGSIZE/2;
 
 
-const int DIMSIZE = 2;
+const int DIMSIZE = 4;
 const int NBLK = DIMSIZE*DIMSIZE;
 const int BLKSIZE = IMGSIZE/DIMSIZE;
 
